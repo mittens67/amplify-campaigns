@@ -4,6 +4,7 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import type { Db } from './db/index.js';
 import { principalMiddleware } from './lib/auth.js';
+import { clock } from './lib/clock.js';
 import { errorHandler } from './lib/errors.js';
 import { authRoutes } from './routes/auth.js';
 import { campaignRoutes } from './routes/campaigns.js';
@@ -17,6 +18,12 @@ export function createApp(db: Db) {
   app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
   app.use(cors());
   app.use(express.json({ limit: '1mb' }));
+  // Lets clients show deadlines relative to the (possibly advanced) demo clock.
+  app.use((_req, res, next) => {
+    res.setHeader('X-Server-Now', clock.now().toISOString());
+    res.setHeader('Access-Control-Expose-Headers', 'X-Server-Now');
+    next();
+  });
 
   app.get('/health', async (_req, res) => {
     try {

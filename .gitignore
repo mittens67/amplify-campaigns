@@ -8,3 +8,4 @@ dist/
 *.aab
 apps/api/.data/
 apps/api/uploads/
+.tmp-export/
