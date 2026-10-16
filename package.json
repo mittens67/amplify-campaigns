@@ -1,0 +1,10 @@
+{
+  "name": "amplify-monorepo",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "test": "npm test -w @amplify/domain",
+    "api": "npm run dev -w @amplify/api",
+    "mobile": "npm start -w @amplify/mobile"
+  }
+}
