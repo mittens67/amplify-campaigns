@@ -9,7 +9,7 @@ import { errorHandler } from './lib/errors.js';
 import { authRoutes } from './routes/auth.js';
 import { campaignRoutes } from './routes/campaigns.js';
 import { reviewRoutes } from './routes/review.js';
-import { localUploadDir } from './services/storage.js';
+import { localUploadDir, seedMediaDir } from './services/storage.js';
 
 export function createApp(db: Db) {
   const app = express();
@@ -35,6 +35,7 @@ export function createApp(db: Db) {
   });
 
   app.use('/uploads', express.static(localUploadDir, { maxAge: '7d', fallthrough: false }));
+  app.use('/seed-media', express.static(seedMediaDir, { maxAge: '30d', immutable: true, fallthrough: false }));
 
   app.use(rateLimit({ windowMs: 60_000, limit: 600, standardHeaders: 'draft-8', legacyHeaders: false }));
   app.use(['/auth/login', '/auth/signup'], rateLimit({ windowMs: 15 * 60_000, limit: 30 }));

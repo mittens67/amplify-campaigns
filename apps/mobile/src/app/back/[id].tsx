@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import Animated, { FadeIn, ZoomIn } from 'react-native-reanimated';
-import { Image } from 'expo-image';
+import { Img as Image } from '@/ui/Img';
 import * as Crypto from 'expo-crypto';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -60,7 +60,11 @@ function CampaignStrip({ c, addCents = 0 }: { c: CampaignDetailDTO; addCents?: n
         <Text variant="label" weight="semi" color={colors.ink} numberOfLines={1}>{c.title}</Text>
         <ProgressBar value={after} height={5} />
         <Text variant="caption">
-          {addCents ? `${before}% → ${after}% funded with you` : `${before}% of ${formatMoney(c.goalCents)} funded`}
+          {addCents && after > before
+            ? `${before}% → ${after}% funded with you`
+            : addCents
+              ? `+${formatMoney(addCents)} toward ${formatMoney(c.goalCents)} · ${before}% funded`
+              : `${before}% of ${formatMoney(c.goalCents)} funded`}
         </Text>
       </View>
     </View>

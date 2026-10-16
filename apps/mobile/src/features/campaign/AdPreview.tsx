@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
+import { Img as Image } from '@/ui/Img';
 import { Globe, Heart, MessageCircle, MoreHorizontal, Send } from 'lucide-react-native';
 import { colors, fonts, radius, space, Text } from '@/ui';
 

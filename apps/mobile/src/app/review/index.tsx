@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
+import { Img as Image } from '@/ui/Img';
 import { useRouter } from 'expo-router';
 import { Flag, Gauge, Inbox } from 'lucide-react-native';
 import { formatMoney, nextStepCopy } from '@amplify/domain';

@@ -29,7 +29,7 @@ function ReachExplainer() {
           <Text variant="label">If you back with</Text>
           <Text style={styles.reachAmount}>${dollars}</Text>
           <Text variant="label">it could reach</Text>
-          <Estimate value={q.estReach} variant="heading" compact={false} />
+          <Estimate value={q.estReach} variant="title" compact={false} suffix="" />
           <Text variant="caption">people outside the creator’s network</Text>
         </View>
       </View>
@@ -98,7 +98,7 @@ export default function HomeScreen() {
 
       {/* How it works */}
       <View style={styles.section}>
-        <SectionHeader title="Create → Review → Amplify" action="How it works" onAction={() => router.push('/info/how-it-works')} />
+        <SectionHeader title="How it works" subtitle="Create → Review → Amplify" action="Learn more" onAction={() => router.push('/info/how-it-works')} />
         <View style={{ gap: space.sm }}>
           {STEPS.map((s, i) => (
             <Pressable key={s.title} onPress={() => router.push('/info/how-it-works')} style={styles.step} accessibilityRole="button">

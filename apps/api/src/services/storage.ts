@@ -24,6 +24,7 @@ const EXT: Record<string, string> = {
 };
 
 export const localUploadDir = join(dirname(fileURLToPath(import.meta.url)), '../../uploads');
+export const seedMediaDir = join(dirname(fileURLToPath(import.meta.url)), '../../seed-media');
 
 const supabase =
   env.SUPABASE_URL && env.SUPABASE_SERVICE_ROLE_KEY
@@ -67,7 +68,8 @@ export async function storeUpload(ownerKey: string, file: { buffer: Buffer; mime
   const dest = join(localUploadDir, path);
   mkdirSync(dirname(dest), { recursive: true });
   writeFileSync(dest, file.buffer);
-  return { url: `${env.PUBLIC_URL}/uploads/${path}`, kind };
+  // Relative URL: clients resolve it against the API they're talking to.
+  return { url: `/uploads/${path}`, kind };
 }
 
 export async function ensureBucket() {

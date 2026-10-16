@@ -1,5 +1,5 @@
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
+import { Img as Image } from '@/ui/Img';
 import { useRouter } from 'expo-router';
 import { HandCoins } from 'lucide-react-native';
 import { formatMoney, nextStepCopy, type ContributionDTO } from '@amplify/domain';

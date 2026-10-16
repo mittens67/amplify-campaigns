@@ -1,6 +1,6 @@
 import { useRef, useState, type ComponentRef } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
+import { Img as Image } from '@/ui/Img';
 import { LinearGradient } from 'expo-linear-gradient';
 import { captureRef } from 'react-native-view-shot';
 import { AlertTriangle, Film, ImagePlus, Lightbulb, Sparkles, Trash2, Wand2 } from 'lucide-react-native';

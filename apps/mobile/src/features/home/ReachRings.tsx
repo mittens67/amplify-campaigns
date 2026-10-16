@@ -58,7 +58,7 @@ export function ReachRings({ dollars }: { dollars: number }) {
         <Ring key={i} index={i} r={ring.r} dots={ring.dots} on={dollars >= ring.threshold} />
       ))}
       <View style={styles.center}>
-        <Text style={{ fontFamily: fonts.sansSemi, fontSize: 10, color: colors.white, textAlign: 'center' }}>Your{'\n'}network</Text>
+        <Text style={{ fontFamily: fonts.sansSemi, fontSize: 12, color: colors.white, textAlign: 'center' }}>You</Text>
       </View>
     </View>
   );

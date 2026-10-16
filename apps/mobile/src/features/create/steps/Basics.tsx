@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
+import { Img as Image } from '@/ui/Img';
 import { ImagePlus, Sparkles, Trash2 } from 'lucide-react-native';
 import { CATEGORIES, CREATOR_TYPES, effectiveAdHeadline, LIMITS } from '@amplify/domain';
 import { api, errorMessage } from '@/lib/api';

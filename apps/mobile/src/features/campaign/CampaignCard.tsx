@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
+import { Img as Image } from '@/ui/Img';
 import { useRouter } from 'expo-router';
 import { CREATOR_TYPES, formatMoney, nextStepCopy, percentFunded, type CampaignSummaryDTO } from '@amplify/domain';
 import { timeLeft } from '@/lib/format';
@@ -46,7 +46,8 @@ export const CampaignCard = memo(function CampaignCard({ c, variant = 'full' }: 
   }
 
   return (
-    <Pressable onPress={open} accessibilityRole="button" accessibilityLabel={`${c.title}, by ${c.creatorName}`} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
+    <View style={styles.card}>
+      <Pressable onPress={open} accessibilityRole="button" accessibilityLabel={`${c.title}, by ${c.creatorName}`} style={({ pressed }) => pressed && styles.pressed}>
       <View>
         <Image source={c.coverUrl} style={styles.cover} contentFit="cover" transition={200} accessibilityIgnoresInvertColors />
         <View style={styles.coverBadges}>
@@ -70,12 +71,14 @@ export const CampaignCard = memo(function CampaignCard({ c, variant = 'full' }: 
           </Row>
           {c.isDemo ? <DemoTag /> : null}
         </Row>
+      </View>
+      </Pressable>
+      <View style={styles.footer}>
         {backable ? (
           <Button
             label="Back this campaign"
             onPress={() => router.push({ pathname: '/back/[id]', params: { id: c.id } })}
             full
-            style={{ marginTop: space.xs }}
           />
         ) : (
           <View style={styles.statusRow}>
@@ -84,7 +87,7 @@ export const CampaignCard = memo(function CampaignCard({ c, variant = 'full' }: 
           </View>
         )}
       </View>
-    </Pressable>
+    </View>
   );
 });
 
@@ -94,8 +97,9 @@ const styles = StyleSheet.create({
   cover: { width: '100%', aspectRatio: 16 / 10, backgroundColor: colors.surfaceAlt },
   coverBadges: { position: 'absolute', top: space.md, left: space.md, flexDirection: 'row', gap: space.xs },
   category: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
-  body: { padding: space.lg, gap: space.sm + 2 },
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.xs, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
+  body: { padding: space.lg, paddingBottom: space.md, gap: space.sm + 2 },
+  footer: { paddingHorizontal: space.lg, paddingBottom: space.lg },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingTop: space.md, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
   compact: { width: 260, height: 300, backgroundColor: colors.surface, borderRadius: radius.xl, overflow: 'hidden', borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, ...shadow.card },
   compactImg: { width: '100%', height: 130, backgroundColor: colors.surfaceAlt },
 });

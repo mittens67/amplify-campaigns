@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Pressable, RefreshControl, SectionList, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
+import { Img as Image } from '@/ui/Img';
 import { useRouter } from 'expo-router';
 import { BadgeCheck, Bell, BellOff, CircleDollarSign, Flag, Megaphone, MessageSquareWarning, Newspaper, Settings2, ShieldAlert, ShieldCheck, Undo2, XCircle, type LucideIcon } from 'lucide-react-native';
 import type { NotificationDTO, NotificationType } from '@amplify/domain';

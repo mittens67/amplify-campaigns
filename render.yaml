@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: amplify-api
+    runtime: node
+    plan: free
+    buildCommand: npm install --workspace @amplify/api --workspace @amplify/domain --include-workspace-root
+    startCommand: npm start -w @amplify/api
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: PUBLIC_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_BUCKET
+        value: campaign-media
+      - key: GROQ_API_KEY
+        sync: false

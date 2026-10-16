@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
+import { Img as Image } from '@/ui/Img';
 import { useLocalSearchParams } from 'expo-router';
 import { Check, ExternalLink, Eye, Rocket, Square, SquareCheck } from 'lucide-react-native';
 import {

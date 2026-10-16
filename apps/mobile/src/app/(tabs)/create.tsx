@@ -1,5 +1,5 @@
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
+import { Img as Image } from '@/ui/Img';
 import { useRouter } from 'expo-router';
 import { ChevronRight, FileEdit, LayoutDashboard, MessageSquareWarning, Mic, PenLine, Trash2 } from 'lucide-react-native';
 import { completedSteps, STEPS } from '@amplify/domain';
@@ -11,7 +11,8 @@ import { colors, IconButton, Notice, radius, Row, SectionHeader, shadow, space, 
 
 function DraftRow({ title, cover, subtitle, done, warn, onPress, onDelete }: { title: string; cover?: string | null; subtitle: string; done: number; warn?: boolean; onPress: () => void; onDelete?: () => void }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.draft, pressed && { opacity: 0.9 }]} accessibilityRole="button" accessibilityLabel={`Continue ${title}`}>
+    <View style={styles.draft}>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.draftMain, pressed && { opacity: 0.9 }]} accessibilityRole="button" accessibilityLabel={`Continue ${title}`}>
       {cover ? <Image source={cover} style={styles.draftImg} contentFit="cover" /> : <View style={[styles.draftImg, styles.draftImgEmpty]}><FileEdit size={20} color={colors.textSubtle} /></View>}
       <View style={{ flex: 1, gap: 4 }}>
         <Text variant="bodyStrong" numberOfLines={1}>{title || 'Untitled campaign'}</Text>
@@ -25,8 +26,10 @@ function DraftRow({ title, cover, subtitle, done, warn, onPress, onDelete }: { t
           ))}
         </View>
       </View>
-      {onDelete ? <IconButton icon={<Trash2 size={16} color={colors.textSubtle} />} label="Delete draft" size={34} onPress={onDelete} /> : <ChevronRight size={18} color={colors.placeholder} />}
+      {onDelete ? null : <ChevronRight size={18} color={colors.placeholder} />}
     </Pressable>
+      {onDelete ? <IconButton icon={<Trash2 size={16} color={colors.textSubtle} />} label="Delete draft" size={34} onPress={onDelete} /> : null}
+    </View>
   );
 }
 
@@ -131,6 +134,7 @@ export default function CreateScreen() {
 }
 
 const styles = StyleSheet.create({
+  draftMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md },
   draft: { flexDirection: 'row', alignItems: 'center', gap: space.md, backgroundColor: colors.surface, borderRadius: radius.lg, padding: space.md, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, ...shadow.card },
   draftImg: { width: 56, height: 56, borderRadius: radius.sm, backgroundColor: colors.surfaceAlt },
   draftImgEmpty: { alignItems: 'center', justifyContent: 'center' },

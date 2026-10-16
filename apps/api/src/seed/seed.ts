@@ -13,7 +13,7 @@ import { transitionCampaign } from '../services/transitions.js';
 import { BACKER_NAMES, SEED, type SeedSpec } from './data.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
-type Img = { url: string; width: number; height: number; credit: string };
+type Img = { url: string; width: number; height: number; credit: string; file?: string };
 const IMAGES: Record<string, Img[]> = JSON.parse(readFileSync(join(here, 'images.json'), 'utf8'));
 
 /** Deterministic pseudo-random numbers so the demo looks the same after every reset. */
@@ -28,7 +28,9 @@ function rng(seed: string) {
 function buildContent(spec: SeedSpec): CampaignContent {
   const c = emptyContent();
   const imgs = IMAGES[spec.img] ?? [];
-  const asset = (img?: Img) => (img ? { url: img.url, kind: 'image' as const, width: img.width, height: img.height } : undefined);
+  // Seed photos are served by this API (not hotlinked) so the demo never depends on a third-party CDN.
+  const asset = (img?: Img) =>
+    img ? { url: img.file ? `/seed-media/${img.file}` : img.url, kind: 'image' as const, width: img.width, height: img.height } : undefined;
   const sources = spec.sources.map((s, i) => ({ id: `${spec.key}-s${i + 1}`, ...s }));
   const sid = (cite?: number[]) => (cite ?? []).map((n) => sources[n - 1]?.id).filter(Boolean) as string[];
 

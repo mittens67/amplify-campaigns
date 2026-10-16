@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { Image } from 'expo-image';
+import { Img as Image } from '@/ui/Img';
 import * as Crypto from 'expo-crypto';
 import { ArrowDown, ArrowUp, Bold, BookMarked, Heading2, ImagePlus, Link2, ListPlus, MoreHorizontal, Pilcrow, Plus, Quote, Sigma, Trash2, X } from 'lucide-react-native';
 import type { Block, BlockType } from '@amplify/domain';

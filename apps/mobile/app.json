@@ -8,19 +8,20 @@
     "scheme": "amplify",
     "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "bundleIdentifier": "com.amplify.campaigns"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#EEF2FF",
+        "backgroundColor": "#4F46E5",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.amplify.campaigns"
     },
     "web": {
-      "output": "server",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -30,11 +31,22 @@
         {
           "backgroundColor": "#F8FAFC",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 120
         }
       ],
-      "expo-audio",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Amplify uses the microphone so you can describe your campaign out loud."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Amplify needs your photos to add images to your campaign."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

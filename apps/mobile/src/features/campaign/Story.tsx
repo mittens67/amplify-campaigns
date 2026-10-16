@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
+import { Img as Image } from '@/ui/Img';
 import { ArrowUpRight, CircleCheck, Quote as QuoteIcon } from 'lucide-react-native';
 import type { Block, CampaignContent } from '@amplify/domain';
 import { colors, fonts, radius, space, Text } from '@/ui';
