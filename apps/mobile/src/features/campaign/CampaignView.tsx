@@ -37,7 +37,7 @@ import { creatorTypeLabel } from './CampaignCard';
 import { FeedbackPoll } from './FeedbackPoll';
 import { ReportSheet } from './ReportSheet';
 import { Actions, Sources, Story } from './Story';
-import { longDate, timeLeft } from '@/lib/format';
+import { longDate, mediumDate, timeLeft } from '@/lib/format';
 import { useToggle } from '@/lib/queries';
 import { shareCampaign } from '@/lib/share';
 import { markTask } from '@/lib/tour';
@@ -45,6 +45,7 @@ import { haptic } from '@/lib/haptics';
 import {
   Accordion,
   Button,
+  isNarrow,
   categoryTint,
   colors,
   DemoTag,
@@ -66,7 +67,7 @@ import {
   toast,
 } from '@/ui';
 
-const COVER_H = 280;
+const COVER_H = isNarrow ? 220 : 280;
 
 function Section({ children, style }: { children: ReactNode; style?: object }) {
   return <View style={[{ paddingHorizontal: space.lg }, style]}>{children}</View>;
@@ -195,7 +196,7 @@ export function CampaignView({ c, preview = false, onBack }: { c: CampaignDetail
               <Text variant="bodyStrong" color={colors.ink}>{content.basics.creatorName || 'Creator name'}</Text>
               <Text variant="caption">
                 {creatorTypeLabel(content.basics.creatorType ?? null)}
-                {c.publishedAt ? ` · Published ${longDate(c.publishedAt)}` : preview ? ' · Preview' : ''}
+                {c.publishedAt ? ` · ${mediumDate(c.publishedAt)}` : preview ? ' · Preview' : ''}
               </Text>
             </View>
             {!preview ? <IconButton icon={<Share2 size={20} color={colors.ink} />} label="Share campaign" variant="filled" onPress={() => shareCampaign(c)} /> : null}

@@ -11,7 +11,7 @@ import { GetStartedChecklist } from '@/features/tour/Checklist';
 import { useFeed } from '@/lib/queries';
 import { useTour } from '@/lib/tour';
 import { haptic } from '@/lib/haptics';
-import { Button, CardSkeleton, colors, ErrorState, Estimate, MoneyFlow, openGlossary, radius, SectionHeader, shadow, space, Text } from '@/ui';
+import { Button, CardSkeleton, colors, isNarrow, ErrorState, Estimate, MoneyFlow, openGlossary, radius, SectionHeader, shadow, space, Text } from '@/ui';
 
 const STEPS = [
   { icon: PenLine, title: 'Create', body: 'A creator writes the message, cites sources and designs the ads.' },
@@ -26,7 +26,7 @@ function ReachExplainer() {
     <View style={styles.reachCard}>
       <Text variant="overline">What a contribution does</Text>
       <View style={styles.reachRow}>
-        <ReachRings dollars={dollars} />
+        <ReachRings dollars={dollars} size={isNarrow ? 128 : 168} />
         <View style={{ flex: 1, gap: space.xs }}>
           <Text variant="label">If you back with</Text>
           <Text style={styles.reachAmount}>${dollars}</Text>
@@ -99,8 +99,8 @@ export default function HomeScreen() {
           Creators share a reviewed, sourced message. Backers pool money for the ads that carry it further — it’s not a donation to the cause.
         </Text>
         <View style={styles.heroCtas}>
-          <Button label="Explore campaigns" onPress={() => router.push('/explore')} style={{ flex: 1 }} />
-          <Button label="Start a campaign" variant="secondary" onPress={() => router.push('/create')} style={{ flex: 1 }} />
+          <Button label="Explore campaigns" onPress={() => router.push('/explore')} full />
+          <Button label="Start a campaign" variant="secondary" onPress={() => router.push('/create')} full />
         </View>
         <ReachExplainer />
       </View>
@@ -177,11 +177,11 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   hero: { paddingHorizontal: space.lg, gap: space.md, paddingBottom: space.xl, backgroundColor: colors.surface, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
-  heroTitle: { fontSize: 32, lineHeight: 38 },
-  heroCtas: { flexDirection: 'row', gap: space.sm, marginTop: space.xs },
+  heroTitle: { fontSize: isNarrow ? 28 : 32, lineHeight: isNarrow ? 34 : 38 },
+  heroCtas: { gap: space.sm, marginTop: space.xs },
   reachCard: { marginTop: space.md, backgroundColor: colors.bg, borderRadius: radius.xl, padding: space.lg, gap: space.md, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border },
-  reachRow: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
-  reachAmount: { fontFamily: 'SourceSerif4_700Bold', fontSize: 36, lineHeight: 40, color: colors.ink },
+  reachRow: { flexDirection: 'row', alignItems: 'center', gap: isNarrow ? space.md : space.lg },
+  reachAmount: { fontFamily: 'SourceSerif4_700Bold', fontSize: isNarrow ? 30 : 36, lineHeight: isNarrow ? 34 : 40, color: colors.ink },
   section: { paddingHorizontal: space.lg, paddingTop: space.xl },
   step: { flexDirection: 'row', gap: space.md, alignItems: 'center', backgroundColor: colors.surface, padding: space.md, borderRadius: radius.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.border, ...shadow.card },
   stepNum: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },

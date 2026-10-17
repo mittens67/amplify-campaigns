@@ -154,7 +154,7 @@ export function JourneyRail({ status, dense }: { status: CampaignStatus; dense?:
             style={[styles.railLabel, i === 0 && { textAlign: 'left' }, i === JOURNEY_STAGES.length - 1 && { textAlign: 'right' }]}
             numberOfLines={1}
           >
-            {s.label}
+            {s.short}
           </Text>
         ))}
       </View>

@@ -11,7 +11,7 @@ const RINGS = [
   { r: 84, threshold: 70, dots: 17 },
 ];
 
-function Ring({ r, on, dots, index }: { r: number; on: boolean; dots: number; index: number }) {
+function Ring({ r, on, dots, index, size }: { r: number; on: boolean; dots: number; index: number; size: number }) {
   const v = useSharedValue(on ? 1 : 0);
   useEffect(() => {
     v.value = withSpring(on ? 1 : 0, { damping: 14, stiffness: 120 });
@@ -37,8 +37,8 @@ function Ring({ r, on, dots, index }: { r: number; on: boolean; dots: number; in
             style={[
               styles.dot,
               {
-                left: SIZE / 2 + Math.cos(a) * r - 3.5,
-                top: SIZE / 2 + Math.sin(a) * r - 3.5,
+                left: size / 2 + Math.cos(a) * r - 3.5,
+                top: size / 2 + Math.sin(a) * r - 3.5,
                 backgroundColor: index === 0 ? colors.textSubtle : colors.accent,
                 opacity: index === 0 ? 0.7 : 1 - index * 0.12,
               },
@@ -51,13 +51,15 @@ function Ring({ r, on, dots, index }: { r: number; on: boolean; dots: number; in
 }
 
 /** "Outside your bubble": your own network in the middle, new audiences ripple outward as backing grows. */
-export function ReachRings({ dollars }: { dollars: number }) {
+export function ReachRings({ dollars, size = SIZE }: { dollars: number; size?: number }) {
+  const k = size / SIZE;
+  const core = Math.round(48 * k);
   return (
-    <View style={{ width: SIZE, height: SIZE }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View style={{ width: size, height: size }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {RINGS.map((ring, i) => (
-        <Ring key={i} index={i} r={ring.r} dots={ring.dots} on={dollars >= ring.threshold} />
+        <Ring key={i} index={i} r={ring.r * k} dots={ring.dots} size={size} on={dollars >= ring.threshold} />
       ))}
-      <View style={styles.center}>
+      <View style={[styles.center, { left: size / 2 - core / 2, top: size / 2 - core / 2, width: core, height: core, borderRadius: core / 2 }]}>
         <Text style={{ fontFamily: fonts.sansSemi, fontSize: 12, color: colors.white, textAlign: 'center' }}>You</Text>
       </View>
     </View>

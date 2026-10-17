@@ -216,11 +216,11 @@ export const BACKABLE_STATUSES: CampaignStatus[] = ['available_for_funding'];
 /* ---------------- Journey Rail ---------------- */
 
 export const JOURNEY_STAGES = [
-  { key: 'review', label: 'Review', blurb: 'Reviewers check the story, sources and ad creative.' },
-  { key: 'funding', label: 'Funding', blurb: 'Backers pool contributions toward distribution.' },
-  { key: 'preparing', label: 'Preparing', blurb: 'The team finalises targeting and ad setup.' },
-  { key: 'promoting', label: 'Promoting', blurb: 'Ads run and show the message to new audiences.' },
-  { key: 'completed', label: 'Completed', blurb: 'Final report with spend and measured reach.' },
+  { key: 'review', label: 'Review', short: 'Review', blurb: 'Reviewers check the story, sources and ad creative.' },
+  { key: 'funding', label: 'Funding', short: 'Funding', blurb: 'Backers pool contributions toward distribution.' },
+  { key: 'preparing', label: 'Preparing', short: 'Setup', blurb: 'The team finalises targeting and ad setup.' },
+  { key: 'promoting', label: 'Promoting', short: 'Ads live', blurb: 'Ads run and show the message to new audiences.' },
+  { key: 'completed', label: 'Completed', short: 'Report', blurb: 'Final report with spend and measured reach.' },
 ] as const;
 export type JourneyStageKey = (typeof JOURNEY_STAGES)[number]['key'];
 

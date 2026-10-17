@@ -1,4 +1,9 @@
+import { Dimensions } from 'react-native';
 import type { StatusTone } from '@amplify/domain';
+
+/** Small phones (most Android devices are 360–393 dp wide) get a tighter type scale. */
+export const isNarrow = Dimensions.get('window').width < 380;
+const n = <T,>(narrow: T, regular: T) => (isNarrow ? narrow : regular);
 
 /** Design tokens — calm editorial: ink on slate, one indigo accent. */
 export const colors = {
@@ -72,17 +77,17 @@ export const fonts = {
 } as const;
 
 export const type = {
-  display: { fontFamily: fonts.serifBold, fontSize: 30, lineHeight: 36, letterSpacing: -0.4, color: colors.ink },
-  title: { fontFamily: fonts.serifSemi, fontSize: 22, lineHeight: 28, letterSpacing: -0.2, color: colors.ink },
-  cardTitle: { fontFamily: fonts.serifSemi, fontSize: 19, lineHeight: 24, color: colors.ink },
-  heading: { fontFamily: fonts.sansSemi, fontSize: 17, lineHeight: 22, color: colors.ink },
+  display: { fontFamily: fonts.serifBold, fontSize: n(26, 30), lineHeight: n(32, 36), letterSpacing: -0.4, color: colors.ink },
+  title: { fontFamily: fonts.serifSemi, fontSize: n(20, 22), lineHeight: n(26, 28), letterSpacing: -0.2, color: colors.ink },
+  cardTitle: { fontFamily: fonts.serifSemi, fontSize: n(17, 19), lineHeight: n(22, 24), color: colors.ink },
+  heading: { fontFamily: fonts.sansSemi, fontSize: n(16, 17), lineHeight: n(21, 22), color: colors.ink },
   body: { fontFamily: fonts.sans, fontSize: 15, lineHeight: 22, color: colors.text },
   bodyStrong: { fontFamily: fonts.sansSemi, fontSize: 15, lineHeight: 22, color: colors.text },
-  story: { fontFamily: fonts.serif, fontSize: 17, lineHeight: 28, color: colors.text },
+  story: { fontFamily: fonts.serif, fontSize: n(16, 17), lineHeight: n(26, 28), color: colors.text },
   label: { fontFamily: fonts.sansMedium, fontSize: 13, lineHeight: 18, color: colors.textMuted },
   caption: { fontFamily: fonts.sans, fontSize: 12, lineHeight: 16, color: colors.textSubtle },
   overline: { fontFamily: fonts.sansSemi, fontSize: 11, lineHeight: 14, letterSpacing: 0.8, textTransform: 'uppercase' as const, color: colors.textSubtle },
-  number: { fontFamily: fonts.sansBold, fontSize: 22, lineHeight: 26, color: colors.ink, fontVariant: ['tabular-nums' as const] },
+  number: { fontFamily: fonts.sansBold, fontSize: n(20, 22), lineHeight: n(24, 26), color: colors.ink, fontVariant: ['tabular-nums' as const] },
 } as const;
 
 export const shadow = {
