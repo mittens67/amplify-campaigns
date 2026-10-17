@@ -172,22 +172,44 @@ const userPrompt = (i: Interview) =>
   `What it's about: ${i.about}\nWho it should reach: ${i.audience}\nWhy it matters: ${i.why}\nEvidence: ${i.evidence}\nWhat people should do: ${i.action}`;
 
 async function geminiGenerate(parts: unknown[], opts: { json?: boolean; system?: string }, signal: AbortSignal): Promise<string> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_MODEL}:generateContent`;
-  const res = await fetch(url, {
-    method: 'POST',
-    signal,
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
-    body: JSON.stringify({
-      ...(opts.system ? { systemInstruction: { parts: [{ text: opts.system }] } } : {}),
-      contents: [{ role: 'user', parts }],
-      generationConfig: { temperature: 0.4, ...(opts.json ? { responseMimeType: 'application/json' } : {}) },
-    }),
+  const body = JSON.stringify({
+    ...(opts.system ? { systemInstruction: { parts: [{ text: opts.system }] } } : {}),
+    contents: [{ role: 'user', parts }],
+    generationConfig: { temperature: 0.4, ...(opts.json ? { responseMimeType: 'application/json' } : {}) },
   });
-  if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  const body = (await res.json()) as any;
-  const text = body.candidates?.[0]?.content?.parts?.map((p: any) => p.text ?? '').join('') ?? '';
-  if (!text) throw new Error('Gemini returned no text');
-  return text;
+  let lastError: Error = new Error('No Gemini models configured');
+  for (const model of env.GEMINI_MODELS) {
+    if (signal.aborted) break;
+    // Each model gets a bounded slice of time so one slow model can't stall the request.
+    const ctrl = new AbortController();
+    const onAbort = () => ctrl.abort();
+    signal.addEventListener('abort', onAbort);
+    const timer = setTimeout(() => ctrl.abort(), 12_000);
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST',
+        signal: ctrl.signal,
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+        body,
+      });
+      if (!res.ok) {
+        lastError = new Error(`Gemini ${model} ${res.status}: ${(await res.text()).slice(0, 200)}`);
+        if ([404, 429, 500, 503].includes(res.status)) continue; // try the next model
+        throw lastError;
+      }
+      const json = (await res.json()) as any;
+      const text = json.candidates?.[0]?.content?.parts?.map((p: any) => p.text ?? '').join('') ?? '';
+      if (text) return text;
+      lastError = new Error(`Gemini ${model} returned no text`);
+    } catch (e) {
+      if ((e as Error).name !== 'AbortError') throw e;
+      lastError = new Error(`Gemini ${model} timed out`);
+    } finally {
+      clearTimeout(timer);
+      signal.removeEventListener('abort', onAbort);
+    }
+  }
+  throw lastError;
 }
 
 async function mistralChat(i: Interview, signal: AbortSignal): Promise<string> {

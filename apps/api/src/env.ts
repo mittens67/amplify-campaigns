@@ -16,7 +16,11 @@ export const env = {
   // AI: Gemini preferred (one key covers drafting + transcription); Mistral as an alternative.
   AI_PROVIDER: str('AI_PROVIDER'),
   GEMINI_API_KEY: str('GEMINI_API_KEY'),
-  GEMINI_MODEL: str('GEMINI_MODEL', 'gemini-2.5-flash'),
+  // Tried in order; the next one is used if a model is overloaded, rate-limited or slow.
+  GEMINI_MODELS: str('GEMINI_MODELS', 'gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-3.8-flash')
+    .split(',')
+    .map((m) => m.trim())
+    .filter(Boolean),
   MISTRAL_API_KEY: str('MISTRAL_API_KEY'),
   MISTRAL_CHAT_MODEL: str('MISTRAL_CHAT_MODEL', 'mistral-small-latest'),
   MISTRAL_STT_MODEL: str('MISTRAL_STT_MODEL', 'voxtral-mini-latest'),
