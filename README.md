@@ -52,7 +52,7 @@ On a physical phone, the app talks to the API on the same machine that serves th
 
 **Auth and identity.** JWT auth with scrypt password hashes. Guests get a random device id, and anything a guest creates moves to their account when they sign in. Backer names are private by default.
 
-**Uploads and AI.** Uploads are checked server-side by magic bytes and size. AI (the free Groq tier for Whisper and Llama) only suggests field values, and falls back to a deterministic template when unavailable. It never sets the funding goal.
+**Uploads and AI.** Uploads are checked server-side by magic bytes and size. AI (Gemini, or Mistral as an alternative) only suggests field values, and falls back to a deterministic template when unavailable. It never sets the funding goal.
 
 ## Deploy
 
@@ -61,7 +61,7 @@ On a physical phone, the app talks to the API on the same machine that serves th
    - `DATABASE_URL`
    - `PUBLIC_URL`
    - `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (for uploads)
-   - `GROQ_API_KEY` (optional)
+   - `GEMINI_API_KEY` (optional; or `MISTRAL_API_KEY`)
 
    Ping `/health` every 10 minutes (for example with cron-job.org) to keep both services awake.
 3. **APK.** Set `EXPO_PUBLIC_API_URL` in `apps/mobile/eas.json`, then run:

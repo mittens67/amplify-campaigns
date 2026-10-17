@@ -4,6 +4,7 @@ import { getDb, migrate } from './db/index.js';
 import { clock } from './lib/clock.js';
 import { seedDemo } from './seed/seed.js';
 import { ensureBucket } from './services/storage.js';
+import { provider } from './services/ai.js';
 
 async function main() {
   const db = await getDb();
@@ -17,7 +18,7 @@ async function main() {
   await ensureBucket().catch((e) => console.warn('[storage]', e.message));
   const app = createApp(db);
   app.listen(env.PORT, '0.0.0.0', () => {
-    console.log(`[api] listening on :${env.PORT} (db: ${db.driver}, ai: ${env.GROQ_API_KEY ? 'groq' : 'template'})`);
+    console.log(`[api] listening on :${env.PORT} (db: ${db.driver}, ai: ${provider() ?? 'template'})`);
   });
 }
 

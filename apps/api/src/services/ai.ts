@@ -5,7 +5,7 @@ import { ApiError } from '../lib/errors.js';
 
 /**
  * AI drafting. Suggestions only — the app shows them as editable "✦ Suggested" fields and
- * never applies a funding goal. Uses Groq's free tier when GROQ_API_KEY is set, with a
+ * never applies a funding goal. Uses Gemini (or Mistral) when an API key is set, with a
  * deterministic template fallback so the flow always works.
  */
 
@@ -147,86 +147,137 @@ Avoid sensational or divisive framing. Return ONLY JSON with exactly these keys:
 "adHeadline": string (max ${LIMITS.adHeadline} chars), "adDescription": string (max ${LIMITS.adDescription} chars), "cta": string (max ${LIMITS.cta} chars),
 "interests": [string] (2-5 audience interests)}`;
 
-async function groqDraft(i: Interview): Promise<AiDraft> {
+/* ---------- Providers: Gemini (preferred) or Mistral, chosen by which key is set ---------- */
+
+type Provider = 'gemini' | 'mistral' | null;
+export function provider(): Provider {
+  if (env.AI_PROVIDER === 'gemini' && env.GEMINI_API_KEY) return 'gemini';
+  if (env.AI_PROVIDER === 'mistral' && env.MISTRAL_API_KEY) return 'mistral';
+  if (env.GEMINI_API_KEY) return 'gemini';
+  if (env.MISTRAL_API_KEY) return 'mistral';
+  return null;
+}
+
+async function timed<T>(ms: number, fn: (signal: AbortSignal) => Promise<T>): Promise<T> {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 20_000);
+  const timer = setTimeout(() => ctrl.abort(), ms);
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      signal: ctrl.signal,
-      headers: { Authorization: `Bearer ${env.GROQ_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: env.GROQ_CHAT_MODEL,
-        temperature: 0.4,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          {
-            role: 'user',
-            content: `What it's about: ${i.about}\nWho it should reach: ${i.audience}\nWhy it matters: ${i.why}\nEvidence: ${i.evidence}\nWhat people should do: ${i.action}`,
-          },
-        ],
-      }),
-    });
-    if (!res.ok) throw new Error(`Groq ${res.status}: ${(await res.text()).slice(0, 200)}`);
-    const body = (await res.json()) as any;
-    const parsed = draftSchema.parse(JSON.parse(body.choices[0].message.content));
-    // Enforce limits even if the model overshoots.
-    return {
-      ...parsed,
-      title: clip(parsed.title, LIMITS.title),
-      summary: clip(parsed.summary, LIMITS.summary),
-      category: (CATEGORIES as readonly string[]).includes(parsed.category) ? parsed.category : 'Other',
-      adHeadline: clip(parsed.adHeadline, LIMITS.adHeadline),
-      adDescription: clip(parsed.adDescription, LIMITS.adDescription),
-      cta: clip(parsed.cta, LIMITS.cta),
-    };
+    return await fn(ctrl.signal);
   } finally {
     clearTimeout(timer);
   }
 }
 
+const userPrompt = (i: Interview) =>
+  `What it's about: ${i.about}\nWho it should reach: ${i.audience}\nWhy it matters: ${i.why}\nEvidence: ${i.evidence}\nWhat people should do: ${i.action}`;
+
+async function geminiGenerate(parts: unknown[], opts: { json?: boolean; system?: string }, signal: AbortSignal): Promise<string> {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_MODEL}:generateContent`;
+  const res = await fetch(url, {
+    method: 'POST',
+    signal,
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY },
+    body: JSON.stringify({
+      ...(opts.system ? { systemInstruction: { parts: [{ text: opts.system }] } } : {}),
+      contents: [{ role: 'user', parts }],
+      generationConfig: { temperature: 0.4, ...(opts.json ? { responseMimeType: 'application/json' } : {}) },
+    }),
+  });
+  if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const body = (await res.json()) as any;
+  const text = body.candidates?.[0]?.content?.parts?.map((p: any) => p.text ?? '').join('') ?? '';
+  if (!text) throw new Error('Gemini returned no text');
+  return text;
+}
+
+async function mistralChat(i: Interview, signal: AbortSignal): Promise<string> {
+  const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
+    method: 'POST',
+    signal,
+    headers: { Authorization: `Bearer ${env.MISTRAL_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: env.MISTRAL_CHAT_MODEL,
+      temperature: 0.4,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: userPrompt(i) },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`Mistral ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const body = (await res.json()) as any;
+  return body.choices[0].message.content;
+}
+
+async function aiDraft(i: Interview): Promise<AiDraft> {
+  const raw = await timed(25_000, (signal) =>
+    provider() === 'gemini'
+      ? geminiGenerate([{ text: userPrompt(i) }], { json: true, system: SYSTEM_PROMPT }, signal)
+      : mistralChat(i, signal),
+  );
+  const parsed = draftSchema.parse(JSON.parse(raw.replace(/^```(?:json)?\s*|\s*```$/g, '')));
+  // Enforce limits even if the model overshoots.
+  return {
+    ...parsed,
+    title: clip(parsed.title, LIMITS.title),
+    summary: clip(parsed.summary, LIMITS.summary),
+    category: (CATEGORIES as readonly string[]).includes(parsed.category) ? parsed.category : 'Other',
+    adHeadline: clip(parsed.adHeadline, LIMITS.adHeadline),
+    adDescription: clip(parsed.adDescription, LIMITS.adDescription),
+    cta: clip(parsed.cta, LIMITS.cta),
+  };
+}
+
 export async function draftFromInterview(i: Interview): Promise<DraftResult> {
   if (i.sample) return { draft: SAMPLE_DRAFT, source: 'sample' };
-  if (!env.GROQ_API_KEY) return { draft: templateDraft(i), source: 'template' };
+  if (!provider()) return { draft: templateDraft(i), source: 'template' };
   try {
-    return { draft: await groqDraft(i), source: 'ai' };
+    return { draft: await aiDraft(i), source: 'ai' };
   } catch (e) {
     console.warn('[ai] falling back to template:', (e as Error).message);
     return { draft: templateDraft(i), source: 'template' };
   }
 }
 
+const TRANSCRIBE_FAILED = "We couldn't transcribe that. Try again or type your answer.";
+
 export async function transcribe(file: { buffer: Buffer; mimetype: string; originalname: string }): Promise<string> {
-  if (!env.GROQ_API_KEY) {
-    throw new ApiError(503, 'AI_UNAVAILABLE', 'Voice transcription is not configured. Type your answer instead.');
-  }
-  const form = new FormData();
-  form.append('file', new Blob([new Uint8Array(file.buffer)], { type: file.mimetype }), file.originalname || 'answer.m4a');
-  form.append('model', env.GROQ_STT_MODEL);
-  form.append('response_format', 'json');
-  form.append('language', 'en');
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 30_000);
+  const p = provider();
+  if (!p) throw new ApiError(503, 'AI_UNAVAILABLE', 'Voice transcription is not configured. Type your answer instead.');
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${env.GROQ_API_KEY}` },
-      body: form,
-      signal: ctrl.signal,
+    return await timed(40_000, async (signal) => {
+      if (p === 'gemini') {
+        // Android/iOS recordings are AAC in an MP4 container (.m4a).
+        const mime = !file.mimetype || /m4a|octet-stream/.test(file.mimetype) ? 'audio/mp4' : file.mimetype;
+        const text = await geminiGenerate(
+          [
+            { inlineData: { mimeType: mime, data: file.buffer.toString('base64') } },
+            { text: 'Transcribe this spoken answer verbatim in English. Return only the transcript text, with no commentary.' },
+          ],
+          {},
+          signal,
+        );
+        return text.trim();
+      }
+      const form = new FormData();
+      form.append('file', new Blob([new Uint8Array(file.buffer)], { type: file.mimetype }), file.originalname || 'answer.m4a');
+      form.append('model', env.MISTRAL_STT_MODEL);
+      form.append('language', 'en');
+      const res = await fetch('https://api.mistral.ai/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${env.MISTRAL_API_KEY}` },
+        body: form,
+        signal,
+      });
+      if (!res.ok) throw new Error(`Mistral STT ${res.status}: ${(await res.text()).slice(0, 300)}`);
+      const body = (await res.json()) as { text?: string };
+      return (body.text ?? '').trim();
     });
-    if (!res.ok) {
-      console.warn('[ai] transcription failed', res.status, (await res.text()).slice(0, 200));
-      throw new ApiError(502, 'AI_FAILED', "We couldn't transcribe that. Try again or type your answer.");
-    }
-    const body = (await res.json()) as { text?: string };
-    return (body.text ?? '').trim();
   } catch (e) {
-    if (e instanceof ApiError) throw e;
-    throw new ApiError(502, 'AI_FAILED', "We couldn't transcribe that. Try again or type your answer.");
-  } finally {
-    clearTimeout(timer);
+    console.warn('[ai] transcription failed:', (e as Error).message);
+    throw new ApiError(502, 'AI_FAILED', TRANSCRIBE_FAILED);
   }
 }
 
-export const aiStatus = () => ({ voice: !!env.GROQ_API_KEY, drafting: env.GROQ_API_KEY ? 'ai' : 'template' });
+export const aiStatus = () => ({ voice: !!provider(), drafting: provider() ? 'ai' : 'template', provider: provider() });

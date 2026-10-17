@@ -13,9 +13,13 @@ export const env = {
   SUPABASE_URL: str('SUPABASE_URL'),
   SUPABASE_SERVICE_ROLE_KEY: str('SUPABASE_SERVICE_ROLE_KEY'),
   SUPABASE_BUCKET: str('SUPABASE_BUCKET', 'campaign-media'),
-  GROQ_API_KEY: str('GROQ_API_KEY'),
-  GROQ_CHAT_MODEL: str('GROQ_CHAT_MODEL', 'llama-3.3-70b-versatile'),
-  GROQ_STT_MODEL: str('GROQ_STT_MODEL', 'whisper-large-v3-turbo'),
+  // AI: Gemini preferred (one key covers drafting + transcription); Mistral as an alternative.
+  AI_PROVIDER: str('AI_PROVIDER'),
+  GEMINI_API_KEY: str('GEMINI_API_KEY'),
+  GEMINI_MODEL: str('GEMINI_MODEL', 'gemini-2.5-flash'),
+  MISTRAL_API_KEY: str('MISTRAL_API_KEY'),
+  MISTRAL_CHAT_MODEL: str('MISTRAL_CHAT_MODEL', 'mistral-small-latest'),
+  MISTRAL_STT_MODEL: str('MISTRAL_STT_MODEL', 'voxtral-mini-latest'),
 };
 
 if (!env.JWT_SECRET) {

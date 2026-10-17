@@ -21,5 +21,7 @@ services:
         sync: false
       - key: SUPABASE_BUCKET
         value: campaign-media
-      - key: GROQ_API_KEY
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: MISTRAL_API_KEY
         sync: false
