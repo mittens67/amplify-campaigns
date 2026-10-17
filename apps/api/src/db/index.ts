@@ -9,7 +9,8 @@ import { env } from '../env.js';
  *  - postgres.js against Supabase Postgres (production) — direct connection so we get real
  *    transactions and row locks (not possible through supabase-js / PostgREST)
  *  - PGlite, an embedded Postgres, for local development and tests
- * Queries use positional $1 parameters; JSON values are passed as strings and cast with ::jsonb.
+ * Queries use positional $1 parameters. JSON values are passed as strings and cast with ::text::jsonb
+ * (a bare ::jsonb makes postgres.js JSON-encode the string a second time).
  */
 export interface Queryable {
   query<T = any>(text: string, params?: unknown[]): Promise<T[]>;
@@ -25,7 +26,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 
 async function createPostgres(url: string): Promise<Db> {
   const { default: postgres } = await import('postgres');
-  const sql = postgres(url, { prepare: false, max: 5, idle_timeout: 20, ssl: url.includes('localhost') ? false : 'require' });
+  const sql = postgres(url, { prepare: false, max: 8, idle_timeout: 20, onnotice: () => {}, ssl: url.includes('localhost') ? false : 'require' });
   const wrap = (s: any): Queryable => ({
     query: async (text, params = []) => (await s.unsafe(text, params as any[])) as any[],
   });

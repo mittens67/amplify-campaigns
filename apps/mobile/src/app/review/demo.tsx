@@ -24,7 +24,7 @@ export default function DemoControls() {
     }
   };
   const reset = () =>
-    Alert.alert('Reset demo data?', 'All campaigns, contributions and notifications return to the starting demo state. Demo accounts are kept.', [
+    Alert.alert('Reset demo data?', 'All campaigns, contributions and notifications return to the starting demo state. Demo accounts are kept. This takes up to a minute.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Reset',
@@ -77,7 +77,7 @@ export default function DemoControls() {
             <RotateCcw size={18} color={colors.danger} />
             <Text variant="heading">Reset demo data</Text>
           </Row>
-          <Text variant="label">Restores every seeded campaign and clears changes made during a demo.</Text>
+          <Text variant="label">Restores every seeded campaign and clears changes made during a demo. Takes up to a minute.</Text>
           <Button label="Reset everything" variant="danger" onPress={reset} loading={busy === 'reset'} />
         </Card>
       </ScrollView>

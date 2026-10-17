@@ -34,7 +34,8 @@ export function createApp(db: Db) {
     }
   });
 
-  app.use('/uploads', express.static(localUploadDir, { maxAge: '7d', fallthrough: false }));
+  // fallthrough: POST /uploads must reach the upload route below; only GETs are served as files.
+  app.use('/uploads', express.static(localUploadDir, { maxAge: '7d' }));
   app.use('/seed-media', express.static(seedMediaDir, { maxAge: '30d', immutable: true, fallthrough: false }));
 
   app.use(rateLimit({ windowMs: 60_000, limit: 600, standardHeaders: 'draft-8', legacyHeaders: false }));

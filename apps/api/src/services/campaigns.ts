@@ -222,7 +222,7 @@ export async function createDraft(q: Queryable, p: Principal, content: unknown) 
   const now = clock.now();
   const [row] = await q.query(
     `INSERT INTO campaigns (id, creator_key, creator_user_id, draft_content, created_at, updated_at, status_changed_at)
-     VALUES ($1,$2,$3,$4::jsonb,$5,$5,$5) RETURNING *`,
+     VALUES ($1,$2,$3,$4::text::jsonb,$5,$5,$5) RETURNING *`,
     [id, p.key, p.userId, JSON.stringify(normalizeContent(content)), now],
   );
   await q.query(
@@ -250,7 +250,7 @@ export async function saveDraft(
   }
   const content = normalizeContent(body.content);
   const [updated] = await q.query(
-    `UPDATE campaigns SET draft_content = $2::jsonb, version = version + 1, current_step = COALESCE($3, current_step),
+    `UPDATE campaigns SET draft_content = $2::text::jsonb, version = version + 1, current_step = COALESCE($3, current_step),
             goal_cents = CASE WHEN status = 'draft' THEN COALESCE($4, goal_cents) ELSE goal_cents END, updated_at = $5
       WHERE id = $1 RETURNING *`,
     [id, JSON.stringify(content), body.step ?? null, content.submit.goalCents ?? null, clock.now()],

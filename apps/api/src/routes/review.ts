@@ -120,7 +120,7 @@ export function reviewRoutes(db: Db) {
           );
         }
         if (body.decision === 'request_changes') {
-          await t.query('UPDATE campaigns SET reviewer_notes = $2::jsonb, reviewer_message = $3 WHERE id = $1', [
+          await t.query('UPDATE campaigns SET reviewer_notes = $2::text::jsonb, reviewer_message = $3 WHERE id = $1', [
             id,
             JSON.stringify(body.fieldNotes),
             body.message,

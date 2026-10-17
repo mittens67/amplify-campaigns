@@ -94,9 +94,9 @@ export async function transitionCampaign(
       break;
     }
     case 'approve':
-      set('published_content', JSON.stringify(row.draft_content), '::jsonb');
+      set('published_content', JSON.stringify(row.draft_content), '::text::jsonb');
       set('reach_model_version', CURRENT_REACH_MODEL.version);
-      set('reviewer_notes', '{}', '::jsonb');
+      set('reviewer_notes', '{}', '::text::jsonb');
       break;
     case 'open_funding':
       set('published_at', now);

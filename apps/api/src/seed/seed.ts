@@ -226,7 +226,7 @@ async function seedCampaign(db: Db, spec: SeedSpec, ctx: { now: number; maya: an
   await db.query(
     `INSERT INTO campaigns (id, creator_key, creator_user_id, draft_content, current_step, goal_cents, featured, is_demo,
        created_at, updated_at, status_changed_at)
-     VALUES ($1,$2,$3,$4::jsonb,$5,$6,$7,true,$8,$8,$8)`,
+     VALUES ($1,$2,$3,$4::text::jsonb,$5,$6,$7,true,$8,$8,$8)`,
     [id, key, owner.id, JSON.stringify(content), plan.kind === 'draft' ? plan.step : 'submit', spec.goal * 100, !!spec.featured, created],
   );
   await db.query(
@@ -268,7 +268,7 @@ async function seedCampaign(db: Db, spec: SeedSpec, ctx: { now: number; maya: an
       ],
       plan.submittedDaysAgo - 1,
     );
-    await db.query('UPDATE campaigns SET reviewer_notes = $2::jsonb, reviewer_message = $3 WHERE id = $1', [
+    await db.query('UPDATE campaigns SET reviewer_notes = $2::text::jsonb, reviewer_message = $3 WHERE id = $1', [
       id,
       JSON.stringify(plan.notes),
       plan.message,
@@ -361,7 +361,15 @@ export async function seedDemo(db: Db) {
     if (s.orgEmail && !orgs.has(s.orgEmail)) orgs.set(s.orgEmail, await upsertUser(db, s.orgEmail, s.creatorName, 'user', hash));
   }
   try {
-    for (const spec of SEED) await seedCampaign(db, spec, { now, maya, sam, reviewer, orgs });
+    // Each campaign gets its own clock, so they can be built concurrently (a few at a time).
+    const queue = [...SEED];
+    const worker = async () => {
+      for (let spec = queue.shift(); spec; spec = queue.shift()) {
+        const s = spec;
+        await clock.isolated(() => seedCampaign(db, s, { now, maya, sam, reviewer, orgs }));
+      }
+    };
+    await Promise.all(Array.from({ length: db.driver === 'postgres' ? 4 : 1 }, worker));
   } finally {
     clock.freeze(null);
   }

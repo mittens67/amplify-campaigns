@@ -1,0 +1,12 @@
+import 'dotenv/config';
+import postgres from 'postgres';
+import { createClient } from '@supabase/supabase-js';
+const sql = postgres(process.env.DATABASE_URL!, { prepare: false, ssl: 'require', max: 1, connect_timeout: 15 });
+const t0 = Date.now();
+const [r] = await sql`select version() as v, current_user as u`;
+console.log('db ok', Date.now() - t0 + 'ms', String(r.v).slice(0, 30), r.u);
+const t1 = Date.now(); await sql`select 1`; console.log('round trip', Date.now() - t1 + 'ms');
+await sql.end();
+const sb = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
+const { data, error } = await sb.storage.listBuckets();
+console.log('storage', error ? 'ERROR ' + error.message : 'ok, buckets: ' + JSON.stringify(data.map((b) => b.name)));

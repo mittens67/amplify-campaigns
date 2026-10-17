@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import type { Queryable } from '../db/index.js';
 
 /**
@@ -8,9 +9,13 @@ import type { Queryable } from '../db/index.js';
 const DAY = 86_400_000;
 let offsetDays = 0;
 let frozen: Date | null = null;
+/** Per-task frozen time, so several campaigns can be seeded in parallel with different clocks. */
+const scoped = new AsyncLocalStorage<{ at: Date | null }>();
 
 export const clock = {
   now(): Date {
+    const local = scoped.getStore();
+    if (local?.at) return new Date(local.at);
     if (frozen) return new Date(frozen);
     return new Date(Date.now() + offsetDays * DAY);
   },
@@ -32,7 +37,13 @@ export const clock = {
   },
   /** Seed helper: pin the clock to a specific instant. */
   freeze(at: Date | null) {
-    frozen = at;
+    const local = scoped.getStore();
+    if (local) local.at = at;
+    else frozen = at;
+  },
+  /** Run fn with its own freezable clock (used by the seed to build campaigns concurrently). */
+  isolated<T>(fn: () => Promise<T>): Promise<T> {
+    return scoped.run({ at: null }, fn);
   },
 };
 
