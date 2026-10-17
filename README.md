@@ -59,7 +59,6 @@ On a physical phone, the app talks to the API on the same machine that serves th
 1. **Supabase.** Create a project and copy the pooler connection string (transaction mode, port 6543). The schema and seed data are created on first boot.
 2. **Render.** Create a Blueprint from `render.yaml`, then set these environment variables:
    - `DATABASE_URL`
-   - `PUBLIC_URL`
    - `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (for uploads)
    - `GEMINI_API_KEY` (optional; or `MISTRAL_API_KEY`)
 

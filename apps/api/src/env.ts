@@ -9,7 +9,6 @@ export const env = {
   PORT: Number(str('PORT', '4000')),
   DATABASE_URL: str('DATABASE_URL'),
   JWT_SECRET: str('JWT_SECRET'),
-  PUBLIC_URL: str('PUBLIC_URL', 'http://localhost:4000').replace(/\/$/, ''),
   SUPABASE_URL: str('SUPABASE_URL'),
   SUPABASE_SERVICE_ROLE_KEY: str('SUPABASE_SERVICE_ROLE_KEY'),
   SUPABASE_BUCKET: str('SUPABASE_BUCKET', 'campaign-media'),

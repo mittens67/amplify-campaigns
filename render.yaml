@@ -3,6 +3,7 @@ services:
     name: amplify-api
     runtime: node
     plan: free
+    region: singapore # nearest Render region to the Supabase project (Seoul)
     buildCommand: npm install --workspace @amplify/api --workspace @amplify/domain --include-workspace-root
     startCommand: npm start -w @amplify/api
     healthCheckPath: /health
@@ -12,8 +13,6 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: DATABASE_URL
-        sync: false
-      - key: PUBLIC_URL
         sync: false
       - key: SUPABASE_URL
         sync: false
