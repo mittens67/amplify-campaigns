@@ -9,6 +9,7 @@ import { emptyContent } from '@amplify/domain';
 import { applyAiDraft, type AiDraftResult } from '@/features/create/aiDraft';
 import { useDrafts } from '@/features/create/draftStore';
 import { api, errorMessage } from '@/lib/api';
+import { appendFile } from '@/lib/media';
 import { haptic } from '@/lib/haptics';
 import { Button, colors, fonts, Notice, radius, Row, ScreenHeader, space, Text, toast } from '@/ui';
 
@@ -79,7 +80,7 @@ export default function VoiceInterview() {
     setTranscribing(true);
     try {
       const form = new FormData();
-      form.append('audio', { uri, name: 'answer.m4a', type: 'audio/m4a' } as any);
+      await appendFile(form, 'audio', uri, Platform.OS === 'web' ? 'answer.webm' : 'answer.m4a', Platform.OS === 'web' ? 'audio/webm' : 'audio/m4a');
       const res = await api<{ text: string }>('/ai/transcribe', { method: 'POST', form, timeoutMs: 40_000 });
       if (!res.text) toast.info('We didn’t catch that. Try again or type it.');
       setAnswers((a) => ({ ...a, [q.key]: [a[q.key], res.text].filter(Boolean).join(' ') }));

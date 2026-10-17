@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { Alert, Platform, ScrollView, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarClock, CreditCard, RotateCcw } from 'lucide-react-native';
 import { useDrafts } from '@/features/create/draftStore';
@@ -11,10 +11,10 @@ import { Button, Card, colors, ErrorState, Notice, Row, ScreenHeader, Skeleton, 
 export default function DemoControls() {
   const state = useQuery({ queryKey: keys.demo, queryFn: () => api<{ clockOffsetDays: number; now: string; pendingPayments: number }>('/demo/state') });
   const [busy, setBusy] = useState<string | null>(null);
-  const run = async (label: string, path: string, body?: unknown, msg?: string) => {
+  const run = async (label: string, path: string, body?: unknown, msg?: string, timeoutMs?: number) => {
     setBusy(label);
     try {
-      await api(path, { method: 'POST', body });
+      await api(path, { method: 'POST', body, timeoutMs });
       await queryClient.invalidateQueries();
       toast.success(msg ?? 'Done');
     } catch (e) {
@@ -23,18 +23,26 @@ export default function DemoControls() {
       setBusy(null);
     }
   };
-  const reset = () =>
-    Alert.alert('Reset demo data?', 'All campaigns, contributions and notifications return to the starting demo state. Demo accounts are kept. This takes up to a minute.', [
+  const doReset = async () => {
+    // Re-seeding takes up to a minute against the hosted database.
+    await run('reset', '/demo/reset', undefined, 'Demo data reset', 150_000);
+    useDrafts.setState({ drafts: {} });
+  };
+  const title = 'Reset demo data?';
+  const message = 'All campaigns, contributions and notifications return to the starting demo state. Demo accounts are kept. This takes up to a minute.';
+  const reset = () => {
+    // Alert.alert is a no-op on web, so use the browser's confirm dialog there.
+    if (Platform.OS === 'web') {
+      if (window.confirm(`${title}
+
+${message}`)) void doReset();
+      return;
+    }
+    Alert.alert(title, message, [
       { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Reset',
-        style: 'destructive',
-        onPress: async () => {
-          await run('reset', '/demo/reset', undefined, 'Demo data reset');
-          useDrafts.setState({ drafts: {} });
-        },
-      },
+      { text: 'Reset', style: 'destructive', onPress: () => void doReset() },
     ]);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
