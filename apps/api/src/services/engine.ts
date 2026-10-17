@@ -109,7 +109,7 @@ let ticking: Promise<void> | null = null;
  */
 export function tick(db: Db, force = false): Promise<void> {
   if (ticking) return ticking;
-  if (!force && Date.now() - lastTick < 3000) return Promise.resolve();
+  if (!force && Date.now() - lastTick < 15_000) return Promise.resolve();
   lastTick = Date.now();
   ticking = runTick(db)
     .catch((e) => console.error('[tick]', e))
@@ -135,7 +135,8 @@ async function runTick(db: Db) {
 
   // Deadline approaching.
   const closing = await db.query(
-    `SELECT * FROM campaigns WHERE status = 'available_for_funding' AND funding_ends_at > $1 AND funding_ends_at <= $2`,
+    `SELECT * FROM campaigns c WHERE status = 'available_for_funding' AND funding_ends_at > $1 AND funding_ends_at <= $2
+       AND NOT EXISTS (SELECT 1 FROM notifications n WHERE n.owner_key = c.creator_key AND n.dedupe_key = c.id || ':deadline')`,
     [now, new Date(now.getTime() + days(DEADLINE_WARNING_DAYS))],
   );
   for (const c of closing) {
@@ -155,7 +156,14 @@ async function runTick(db: Db) {
   }
 
   // Ad delivery for running campaigns.
-  const running = await db.query(`SELECT * FROM campaigns WHERE status = 'promoting' AND launched_at IS NOT NULL`);
+  // Only campaigns with at least one new delivery day due (one query instead of a transaction per campaign).
+  const running = await db.query(
+    `SELECT c.* FROM campaigns c
+      WHERE c.status = 'promoting' AND c.launched_at IS NOT NULL
+        AND floor(extract(epoch FROM ($1::timestamptz - c.launched_at)) / 86400) >
+            COALESCE((SELECT MAX(day) FROM distribution_metrics m WHERE m.campaign_id = c.id), 0)`,
+    [now],
+  );
   for (const c of running) {
     const elapsed = Math.floor((now.getTime() - new Date(c.launched_at).getTime()) / days(1));
     if (elapsed < 1) continue;

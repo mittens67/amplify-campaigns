@@ -24,7 +24,7 @@ import {
   saveDraft,
   toSummary,
 } from '../services/campaigns.js';
-import { createContribution, getContribution, listContributions } from '../services/contributions.js';
+import { createContribution, getContribution, listContributions, settleDuePayments } from '../services/contributions.js';
 import { tick } from '../services/engine.js';
 import { getPrefs, listNotifications, notify, setPref, supporterKeys } from '../services/notifications.js';
 import { storeUpload, UPLOAD_RULES } from '../services/storage.js';
@@ -41,7 +41,7 @@ export function campaignRoutes(db: Db) {
   r.get(
     '/campaigns',
     ah(async (req, res) => {
-      await tick(db);
+      void tick(db); // time-based rules run in the background; reads never wait for them
       const qs = req.query as Record<string, string | undefined>;
       res.json(
         await listCampaigns(db, {
@@ -61,7 +61,7 @@ export function campaignRoutes(db: Db) {
   r.get(
     '/campaigns/:id',
     ah(async (req, res) => {
-      await tick(db);
+      void tick(db); // time-based rules run in the background; reads never wait for them
       res.json(await getCampaignDetail(db, req.params.id as string, req.principal));
     }),
   );
@@ -126,7 +126,7 @@ export function campaignRoutes(db: Db) {
     '/campaigns/:id/analytics',
     ah(async (req, res) => {
       requireKey(req);
-      await tick(db);
+      void tick(db); // time-based rules run in the background; reads never wait for them
       res.json(await analytics(db, req.params.id as string, req.principal));
     }),
   );
@@ -232,7 +232,8 @@ export function campaignRoutes(db: Db) {
     '/contributions/:id',
     ah(async (req, res) => {
       const key = requireKey(req);
-      await tick(db, true);
+      // Only the payment poll needs fresh state; settle any due payment, nothing else.
+      await settleDuePayments(db);
       res.json(await getContribution(db, req.params.id as string, key));
     }),
   );
@@ -243,7 +244,7 @@ export function campaignRoutes(db: Db) {
     '/me/contributions',
     ah(async (req, res) => {
       const key = requireKey(req);
-      await tick(db);
+      void tick(db); // time-based rules run in the background; reads never wait for them
       res.json(await listContributions(db, key));
     }),
   );
@@ -252,7 +253,7 @@ export function campaignRoutes(db: Db) {
     '/me/campaigns',
     ah(async (req, res) => {
       requireKey(req);
-      await tick(db);
+      void tick(db); // time-based rules run in the background; reads never wait for them
       res.json(await myCampaigns(db, req.principal));
     }),
   );
@@ -275,7 +276,7 @@ export function campaignRoutes(db: Db) {
     '/activity',
     ah(async (req, res) => {
       const key = requireKey(req);
-      await tick(db);
+      void tick(db); // time-based rules run in the background; reads never wait for them
       res.json(await listNotifications(db, key));
     }),
   );

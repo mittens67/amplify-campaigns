@@ -26,7 +26,7 @@ export function reviewRoutes(db: Db) {
     '/review/queue',
     ah(async (req, res) => {
       requireReviewer(req);
-      await tick(db);
+      void tick(db);
       const tab = String(req.query.tab ?? 'submitted');
       if (tab === 'reports') {
         const rows = await db.query(
