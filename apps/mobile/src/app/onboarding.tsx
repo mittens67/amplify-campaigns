@@ -1,10 +1,13 @@
-import { useRef, useState } from 'react';
-import { FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Megaphone, PenLine, ShieldCheck, type LucideIcon } from 'lucide-react-native';
 import { CURRENT_REACH_MODEL, quote } from '@amplify/domain';
 import { ReachRings } from '@/features/home/ReachRings';
+import { haptic } from '@/lib/haptics';
 import { useSession } from '@/lib/session';
 import { Button, colors, MoneyFlow, radius, space, Text } from '@/ui';
 
@@ -30,40 +33,50 @@ const PAGES: { icon: LucideIcon; overline: string; title: string; body: string }
 ];
 
 export default function Onboarding() {
-  const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const setOnboarded = useSession((s) => s.setOnboarded);
-  const list = useRef<FlatList>(null);
   const [page, setPage] = useState(0);
+  const last = PAGES.length - 1;
   const finish = () => {
     setOnboarded();
     router.replace('/');
   };
+  const go = (i: number) => {
+    const next = Math.max(0, Math.min(last, i));
+    if (next !== page) {
+      haptic('select');
+      setPage(next);
+    }
+  };
   const q = quote(1000, CURRENT_REACH_MODEL.peoplePerAdDollar);
+  const item = PAGES[page];
+
+  // Swipe left/right to change page. Works on touch screens and with a mouse on web.
+  const swipe = Gesture.Pan()
+    .activeOffsetX([-20, 20])
+    .failOffsetY([-25, 25])
+    .runOnJS(true)
+    .onEnd((e) => {
+      if (e.translationX < -50 || e.velocityX < -500) go(page + 1);
+      else if (e.translationX > 50 || e.velocityX > 500) go(page - 1);
+    });
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface, paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, space.lg) }}>
       <View style={styles.top}>
-        <Text variant="overline" color={colors.accentText}>Amplify</Text>
-        {page < PAGES.length - 1 ? <Button label="Skip" variant="ghost" size="sm" onPress={finish} /> : <View style={{ height: 36 }} />}
+        {page > 0 ? <Button label="Back" variant="ghost" size="sm" onPress={() => go(page - 1)} /> : <Text variant="overline" color={colors.accentText}>Amplify</Text>}
+        {page < last ? <Button label="Skip" variant="ghost" size="sm" onPress={finish} /> : <View style={{ height: 36 }} />}
       </View>
-      <FlatList
-        ref={list}
-        data={PAGES}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(p) => p.title}
-        onMomentumScrollEnd={(e) => setPage(Math.round(e.nativeEvent.contentOffset.x / width))}
-        renderItem={({ item, index }) => (
-          <View style={{ width, paddingHorizontal: space.xl, justifyContent: 'center', gap: space.lg }}>
+      <GestureDetector gesture={swipe}>
+        <View style={{ flex: 1 }}>
+          <Animated.View key={page} entering={FadeIn.duration(220)} style={styles.page} accessibilityLiveRegion="polite">
             <View style={styles.visual}>
-              {index === 0 ? (
+              {page === 0 ? (
                 <View style={styles.bigIcon}>
                   <item.icon size={44} color={colors.accent} strokeWidth={1.6} />
                 </View>
-              ) : index === 1 ? (
+              ) : page === 1 ? (
                 <View style={{ gap: space.sm, width: '100%' }}>
                   {['Fact-Check', 'Communication Integrity', 'Shared Reality'].map((l) => (
                     <View key={l} style={styles.layer}>
@@ -86,21 +99,25 @@ export default function Onboarding() {
             <Text variant="overline" color={colors.accentText}>{item.overline}</Text>
             <Text variant="display">{item.title}</Text>
             <Text variant="body" color={colors.textMuted} style={{ fontSize: 16, lineHeight: 24 }}>{item.body}</Text>
-          </View>
-        )}
-      />
+          </Animated.View>
+        </View>
+      </GestureDetector>
       <View style={styles.bottom}>
-        <View style={styles.dots}>
+        <View style={styles.dots} accessibilityRole="tablist">
           {PAGES.map((p, i) => (
-            <View key={p.title} style={[styles.dot, i === page && styles.dotOn]} />
+            <Pressable
+              key={p.title}
+              onPress={() => go(i)}
+              hitSlop={10}
+              accessibilityRole="tab"
+              accessibilityLabel={`Page ${i + 1} of ${PAGES.length}`}
+              accessibilityState={{ selected: i === page }}
+            >
+              <View style={[styles.dot, i === page && styles.dotOn]} />
+            </Pressable>
           ))}
         </View>
-        <Button
-          label={page === PAGES.length - 1 ? 'Start exploring' : 'Next'}
-          onPress={() => (page === PAGES.length - 1 ? finish() : list.current?.scrollToIndex({ index: page + 1 }))}
-          full
-          size="lg"
-        />
+        <Button label={page === last ? 'Start exploring' : 'Next'} onPress={() => (page === last ? finish() : go(page + 1))} full size="lg" />
       </View>
     </View>
   );
@@ -108,6 +125,7 @@ export default function Onboarding() {
 
 const styles = StyleSheet.create({
   top: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: space.xl, height: 52 },
+  page: { flex: 1, paddingHorizontal: space.xl, justifyContent: 'center', gap: space.lg },
   visual: { height: 260, alignItems: 'center', justifyContent: 'center' },
   bigIcon: { width: 120, height: 120, borderRadius: 60, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' },
   layer: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.lg, backgroundColor: colors.successSoft },

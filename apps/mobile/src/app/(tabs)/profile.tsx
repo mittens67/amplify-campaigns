@@ -13,6 +13,7 @@ import {
   Info,
   LayoutDashboard,
   LogOut,
+  PlayCircle,
   Mail,
   Receipt,
   Repeat,
@@ -137,6 +138,8 @@ export default function ProfileScreen() {
 
         <Group title="Learn">
           <ListRow icon={<BookOpen size={20} color={colors.ink} />} title="How it works" onPress={go('/info/how-it-works')} />
+          <Divider inset={56} />
+          <ListRow icon={<PlayCircle size={20} color={colors.ink} />} title="Replay the intro" subtitle="The three-step welcome tour" onPress={go('/onboarding')} />
           <Divider inset={56} />
           <ListRow icon={<Info size={20} color={colors.ink} />} title="About" onPress={go('/info/about')} />
           <Divider inset={56} />
