@@ -9,6 +9,7 @@ import { CURRENT_REACH_MODEL, quote } from '@amplify/domain';
 import { ReachRings } from '@/features/home/ReachRings';
 import { haptic } from '@/lib/haptics';
 import { useSession } from '@/lib/session';
+import { useTour } from '@/lib/tour';
 import { Button, colors, MoneyFlow, radius, space, Text } from '@/ui';
 
 const PAGES: { icon: LucideIcon; overline: string; title: string; body: string }[] = [
@@ -40,6 +41,8 @@ export default function Onboarding() {
   const last = PAGES.length - 1;
   const finish = () => {
     setOnboarded();
+    // First time through: follow the intro with the guided tour of the tabs.
+    if (!useTour.getState().tourSeen) useTour.getState().startTour('new');
     router.replace('/');
   };
   const go = (i: number) => {

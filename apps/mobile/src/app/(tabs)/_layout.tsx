@@ -1,8 +1,11 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect } from 'react';
+import { AppState, Pressable, StyleSheet, View } from 'react-native';
 import { Redirect, Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bell, Compass, Home, Plus, UserRound } from 'lucide-react-native';
+import { TabTour, TAB_BAR_BASE_HEIGHT } from '@/features/tour/TabTour';
 import { useActivity } from '@/lib/queries';
+import { useTour } from '@/lib/tour';
 import { useSession } from '@/lib/session';
 import { haptic } from '@/lib/haptics';
 import { colors, fonts, shadow } from '@/ui';
@@ -12,9 +15,18 @@ export default function TabLayout() {
   const { data: activity } = useActivity();
   const unread = activity?.filter((n) => !n.read).length ?? 0;
   const insets = useSafeAreaInsets();
+  const tourHydrated = useTour((s) => s.hydrated);
+  // Offer a refresher tour to people returning after a long break.
+  useEffect(() => {
+    if (!tourHydrated) return;
+    useTour.getState().checkIn();
+    const sub = AppState.addEventListener('change', (state) => state === 'active' && useTour.getState().checkIn());
+    return () => sub.remove();
+  }, [tourHydrated]);
   if (!onboarded) return <Redirect href="/onboarding" />;
 
   return (
+    <View style={{ flex: 1 }}>
     <Tabs
       screenListeners={{ tabPress: () => haptic('select') }}
       screenOptions={{
@@ -22,7 +34,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.ink,
         tabBarInactiveTintColor: colors.textSubtle,
         tabBarLabelStyle: { fontFamily: fonts.sansMedium, fontSize: 11, marginTop: 2 },
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, height: 66 + insets.bottom, paddingTop: 6, paddingBottom: insets.bottom + 4 },
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, height: TAB_BAR_BASE_HEIGHT + insets.bottom, paddingTop: 6, paddingBottom: insets.bottom + 4 },
         sceneStyle: { backgroundColor: colors.bg },
       }}
     >
@@ -53,6 +65,8 @@ export default function TabLayout() {
       />
       <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: ({ color, focused }) => <UserRound size={22} color={color} strokeWidth={focused ? 2.4 : 1.8} /> }} />
     </Tabs>
+      <TabTour />
+    </View>
   );
 }
 

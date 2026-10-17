@@ -1,5 +1,7 @@
 import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { markTask } from '@/lib/tour';
 import { FileQuestion, Mail } from 'lucide-react-native';
 import { AMPLIFICATION_LINE, CURRENT_REACH_MODEL, GLOSSARY, JOURNEY_STAGES, quote, REFUND_MATRIX } from '@amplify/domain';
 import { Accordion, Button, colors, EmptyState, JourneyRail, MoneyFlow, Notice, radius, ScreenHeader, space, Text } from '@/ui';
@@ -100,6 +102,9 @@ export default function InfoPage() {
   const { page } = useLocalSearchParams<{ page: string }>();
   const router = useRouter();
   const p = PAGES[page];
+  useEffect(() => {
+    if (page === 'how-it-works') markTask('learn');
+  }, [page]);
   if (!p) {
     return (
       <View style={{ flex: 1, backgroundColor: colors.bg }}>

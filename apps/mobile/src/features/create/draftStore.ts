@@ -5,6 +5,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { emptyContent, normalizeContent, type CampaignContent, type StepKey } from '@amplify/domain';
 import { api, ApiError } from '@/lib/api';
 import { queryClient, keys } from '@/lib/queries';
+import { markTask } from '@/lib/tour';
 
 export type SyncState = 'saved' | 'saving' | 'pending' | 'offline' | 'conflict' | 'locked';
 
@@ -47,6 +48,7 @@ export const useDrafts = create<DraftState>()(
           },
         }));
         scheduleSync(key, 0);
+        markTask('create');
         return key;
       },
       adopt: (serverId, content, version, step = 'basics') => {

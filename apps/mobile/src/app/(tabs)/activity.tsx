@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Pressable, RefreshControl, SectionList, StyleSheet, View } from 'react-native';
 import { Img as Image } from '@/ui/Img';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { BadgeCheck, Bell, BellOff, CircleDollarSign, Flag, Megaphone, MessageSquareWarning, Newspaper, Settings2, ShieldAlert, ShieldCheck, Undo2, XCircle, type LucideIcon } from 'lucide-react-native';
 import type { NotificationDTO, NotificationType } from '@amplify/domain';
 import { api } from '@/lib/api';
 import { dayBucket, relativeTime } from '@/lib/format';
 import { keys, queryClient, useActivity } from '@/lib/queries';
+import { markTask } from '@/lib/tour';
 import { colors, EmptyState, ErrorState, IconButton, radius, Segmented, Skeleton, space, TabTitle, Text } from '@/ui';
 
 const ICONS: Partial<Record<NotificationType, { icon: LucideIcon; color: string; bg: string }>> = {
@@ -46,6 +47,8 @@ export default function ActivityScreen() {
   const router = useRouter();
   const q = useActivity();
   const [tab, setTab] = useState<'you' | 'campaigns'>('you');
+  // Tab screens stay mounted, so count a visit each time the tab gains focus.
+  useFocusEffect(useCallback(() => markTask('activity'), []));
   const all = q.data ?? [];
   const forYou = all.filter((n) => n.audience !== 'creator');
   const yours = all.filter((n) => n.audience === 'creator');

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,7 +7,9 @@ import { Megaphone, PenLine, ShieldCheck } from 'lucide-react-native';
 import { CURRENT_REACH_MODEL, peoplePerContributedDollar, quote } from '@amplify/domain';
 import { CampaignCard } from '@/features/campaign/CampaignCard';
 import { ReachRings } from '@/features/home/ReachRings';
+import { GetStartedChecklist } from '@/features/tour/Checklist';
 import { useFeed } from '@/lib/queries';
+import { useTour } from '@/lib/tour';
 import { haptic } from '@/lib/haptics';
 import { Button, CardSkeleton, colors, ErrorState, Estimate, MoneyFlow, openGlossary, radius, SectionHeader, shadow, space, Text } from '@/ui';
 
@@ -65,6 +67,12 @@ export default function HomeScreen() {
   const featured = useFeed({ featured: true, limit: 6 });
   const feed = useFeed({ sort: 'trending', limit: 10 });
   const [refreshing, setRefreshing] = useState(false);
+  const scroll = useRef<ComponentRef<typeof ScrollView>>(null);
+  const checklistY = useRef(0);
+  const focusChecklist = useTour((s) => s.focusChecklist);
+  useEffect(() => {
+    if (focusChecklist) setTimeout(() => scroll.current?.scrollTo({ y: Math.max(0, checklistY.current - space.lg), animated: true }), 350);
+  }, [focusChecklist]);
   const featuredItems = featured.data?.pages.flatMap((p) => p.items) ?? [];
   const feedItems = (feed.data?.pages.flatMap((p) => p.items) ?? []).filter((c) => !c.featured);
 
@@ -76,6 +84,7 @@ export default function HomeScreen() {
 
   return (
     <ScrollView
+      ref={scroll}
       style={{ flex: 1, backgroundColor: colors.bg }}
       contentContainerStyle={{ paddingBottom: space.xxxl }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.accent} colors={[colors.accent]} />}
@@ -94,6 +103,10 @@ export default function HomeScreen() {
           <Button label="Start a campaign" variant="secondary" onPress={() => router.push('/create')} style={{ flex: 1 }} />
         </View>
         <ReachExplainer />
+      </View>
+
+      <View style={[styles.section, { paddingBottom: 0 }]} onLayout={(e) => (checklistY.current = e.nativeEvent.layout.y)}>
+        <GetStartedChecklist />
       </View>
 
       {/* How it works */}

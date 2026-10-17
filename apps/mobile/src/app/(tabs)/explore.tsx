@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { ArrowDownUp, Search, SearchX, SlidersHorizontal, X } from 'lucide-react-native';
 import { CATEGORIES, CREATOR_TYPES } from '@amplify/domain';
 import { CampaignCard } from '@/features/campaign/CampaignCard';
 import { useFeed, type FeedParams } from '@/lib/queries';
+import { markTask } from '@/lib/tour';
 import { Button, CardSkeleton, Chip, colors, EmptyState, ErrorState, fonts, radius, Row, Sheet, space, TabTitle, Text } from '@/ui';
 
 const SORTS = [
@@ -39,6 +41,8 @@ export default function ExploreScreen() {
   const [creatorType, setCreatorType] = useState('');
   const [sheet, setSheet] = useState<'sort' | 'filters' | null>(null);
   const q = useDebounced(query.trim());
+  // Tab screens stay mounted, so count a visit each time the tab gains focus.
+  useFocusEffect(useCallback(() => markTask('explore'), []));
 
   const params: FeedParams = useMemo(() => ({ q, category, sort, status, creatorType, limit: 12 }), [q, category, sort, status, creatorType]);
   const feed = useFeed(params);

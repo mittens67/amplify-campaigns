@@ -13,6 +13,8 @@ import {
   Info,
   LayoutDashboard,
   LogOut,
+  Compass,
+  ListChecks,
   PlayCircle,
   Mail,
   Receipt,
@@ -26,6 +28,7 @@ import type { UserDTO } from '@amplify/domain';
 import { api, errorMessage } from '@/lib/api';
 import { signOut, useMyCampaigns, useMyContributions, useSaved } from '@/lib/queries';
 import { useSession } from '@/lib/session';
+import { useTour } from '@/lib/tour';
 import { Button, Card, colors, Divider, ListRow, Pill, Row, space, TabTitle, Text, toast } from '@/ui';
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
@@ -151,6 +154,18 @@ export default function ProfileScreen() {
         </Group>
 
         <Group title="Help & legal">
+          <ListRow icon={<Compass size={20} color={colors.ink} />} title="Take the app tour" subtitle="A one-minute walk through the five tabs" onPress={() => useTour.getState().startTour('manual')} />
+          <Divider inset={56} />
+          <ListRow
+            icon={<ListChecks size={20} color={colors.ink} />}
+            title="Get started checklist"
+            subtitle="Show the learn-by-doing steps on Home"
+            onPress={() => {
+              useTour.getState().showChecklist();
+              router.navigate('/');
+            }}
+          />
+          <Divider inset={56} />
           <ListRow icon={<CircleHelp size={20} color={colors.ink} />} title="Help center" onPress={go('/info/help')} />
           <Divider inset={56} />
           <ListRow icon={<Mail size={20} color={colors.ink} />} title="Contact us" onPress={go('/info/contact')} />

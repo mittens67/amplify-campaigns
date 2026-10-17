@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { Img as Image } from '@/ui/Img';
@@ -40,6 +40,7 @@ import { Actions, Sources, Story } from './Story';
 import { longDate, timeLeft } from '@/lib/format';
 import { useToggle } from '@/lib/queries';
 import { shareCampaign } from '@/lib/share';
+import { markTask } from '@/lib/tour';
 import { haptic } from '@/lib/haptics';
 import {
   Accordion,
@@ -144,6 +145,9 @@ export function CampaignView({ c, preview = false, onBack }: { c: CampaignDetail
   });
   const barStyle = useAnimatedStyle(() => ({ opacity: interpolate(y.value, [COVER_H - 120, COVER_H - 60], [0, 1], 'clamp') }));
   const save = useToggle('save', c.id);
+  useEffect(() => {
+    if (!preview) markTask('open');
+  }, [preview]);
   const content = c.content;
   const backable = c.status === 'available_for_funding' && !preview;
   const sampleQuote = quote(2500, reachModel(c.reachModelVersion).peoplePerAdDollar);

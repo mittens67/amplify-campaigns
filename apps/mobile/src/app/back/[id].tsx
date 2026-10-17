@@ -22,6 +22,7 @@ import { haptic } from '@/lib/haptics';
 import { invalidateAfterContribution, useCampaign, useContribute, useContribution } from '@/lib/queries';
 import { useSession } from '@/lib/session';
 import { shareCampaign } from '@/lib/share';
+import { markTask } from '@/lib/tour';
 import {
   Button,
   Chip,
@@ -90,6 +91,9 @@ export default function BackFlow() {
   const [closedError, setClosedError] = useState<ApiError | null>(null);
   const idem = useRef<string>(Crypto.randomUUID());
   const contribute = useContribute();
+  useEffect(() => {
+    if (step === 'review') markTask('learn'); // the itemised money breakdown
+  }, [step]);
 
   const amountCents = preset ?? Math.round((parseFloat(custom.replace(/[^0-9.]/g, '')) || 0) * 100);
   const amountError =
@@ -107,6 +111,7 @@ export default function BackFlow() {
   useEffect(() => {
     if (status === 'succeeded') {
       haptic('success');
+      markTask('back');
       if (id) invalidateAfterContribution(id);
     }
     if (status === 'failed') haptic('error');

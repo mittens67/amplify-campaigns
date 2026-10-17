@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CheckCircle2, Info, X, XCircle } from 'lucide-react-native';
 import { create } from 'zustand';
 import { GLOSSARY, type GlossaryKey } from '@amplify/domain';
+import { markTask } from '@/lib/tour';
 import { IconButton } from './Button';
 import { Text } from './Text';
 import { colors, radius, shadow, space } from './theme';
@@ -42,7 +43,10 @@ const useGlossaryStore = create<{ key: GlossaryKey | null; open: (k: GlossaryKey
   open: (key) => set({ key }),
   close: () => set({ key: null }),
 }));
-export const openGlossary = (k: GlossaryKey) => useGlossaryStore.getState().open(k);
+export const openGlossary = (k: GlossaryKey) => {
+  if (k === 'platformFee' || k === 'notDonation' || k === 'processingFee') markTask('learn');
+  useGlossaryStore.getState().open(k);
+};
 
 export function GlossaryHost() {
   const { key, close } = useGlossaryStore();
