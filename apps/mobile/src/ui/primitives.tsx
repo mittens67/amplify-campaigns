@@ -172,7 +172,7 @@ export function ErrorState({ error, onRetry, compact }: { error: unknown; onRetr
       </View>
       <Text variant="heading" align="center">{offline ? 'Can’t reach the server' : 'That didn’t load'}</Text>
       <Text variant="body" color={colors.textMuted} align="center" style={{ maxWidth: 300 }}>
-        {offline ? 'The demo server may be waking up. This can take up to a minute the first time.' : message}
+        {offline ? ((error as any)?.message?.includes('EXPO_PUBLIC_API_URL') ? message : 'The demo server may be waking up. This can take up to a minute the first time.') : message}
       </Text>
       {onRetry ? (
         <Button

@@ -12,6 +12,16 @@ function resolveApiUrl() {
 
 export const API_URL = resolveApiUrl();
 
+/**
+ * `expo start --tunnel` serves the bundle from an exp.direct / ngrok address, which only forwards
+ * Metro — not our API. In that case EXPO_PUBLIC_API_URL must point at a reachable API.
+ */
+export const API_UNREACHABLE_HINT =
+  !process.env.EXPO_PUBLIC_API_URL && /exp\.direct|ngrok/.test(Constants.expoConfig?.hostUri ?? '')
+    ? 'Running through an Expo tunnel: set EXPO_PUBLIC_API_URL in apps/mobile/.env to an address the phone can reach, then restart Expo.'
+    : null;
+if (API_UNREACHABLE_HINT) console.warn(API_UNREACHABLE_HINT);
+
 /** Difference between the server's demo clock and this device, so deadlines read correctly. */
 let serverOffsetMs = 0;
 export const serverNow = () => Date.now() + serverOffsetMs;
@@ -54,7 +64,7 @@ export async function api<T>(path: string, opts: Options = {}): Promise<T> {
       body: opts.form ?? (opts.body === undefined ? undefined : JSON.stringify(opts.body)),
     });
   } catch {
-    throw new ApiError(0, 'NETWORK', 'Can’t reach the server. Check your connection and try again.');
+    throw new ApiError(0, 'NETWORK', API_UNREACHABLE_HINT ?? 'Can’t reach the server. Check your connection and try again.');
   } finally {
     clearTimeout(timer);
   }
