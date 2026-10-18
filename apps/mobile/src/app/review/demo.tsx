@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Alert, Platform, ScrollView, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { CalendarClock, CreditCard, RotateCcw } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { CalendarClock, CreditCard, RotateCcw, UserRoundPlus } from 'lucide-react-native';
 import { useDrafts } from '@/features/create/draftStore';
 import { api, errorMessage } from '@/lib/api';
 import { longDate } from '@/lib/format';
 import { keys, queryClient } from '@/lib/queries';
+import { resetDevice } from '@/lib/resetDevice';
 import { Button, Card, colors, ErrorState, Notice, Row, ScreenHeader, Skeleton, space, Text, toast } from '@/ui';
 
 export default function DemoControls() {
@@ -30,24 +32,53 @@ export default function DemoControls() {
   };
   const title = 'Reset demo data?';
   const message = 'All campaigns, contributions and notifications return to the starting demo state. Demo accounts are kept. This takes up to a minute.';
-  const reset = () => {
-    // Alert.alert is a no-op on web, so use the browser's confirm dialog there.
+  // Alert.alert is a no-op on web, so use the browser's confirm dialog there.
+  const confirmThen = (t: string, m: string, action: string, fn: () => void) => {
     if (Platform.OS === 'web') {
-      if (window.confirm(`${title}
+      if (window.confirm(`${t}
 
-${message}`)) void doReset();
+${m}`)) fn();
       return;
     }
-    Alert.alert(title, message, [
+    Alert.alert(t, m, [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Reset', style: 'destructive', onPress: () => void doReset() },
+      { text: action, style: 'destructive', onPress: fn },
     ]);
   };
+  const reset = () => confirmThen(title, message, 'Reset', () => void doReset());
+
+  const router = useRouter();
+  // Usability tests: fresh demo data AND a first-launch device (signed out, intro + tour again).
+  const nextParticipant = () =>
+    confirmThen(
+      'Prepare for the next participant?',
+      'Resets the demo data (up to a minute), signs this device out and shows the intro and tour again.',
+      'Prepare',
+      async () => {
+        setBusy('next');
+        try {
+          await api('/demo/reset', { method: 'POST', timeoutMs: 150_000 });
+          resetDevice();
+          router.replace('/onboarding');
+        } catch (e) {
+          toast.error(errorMessage(e));
+          setBusy(null);
+        }
+      },
+    );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScreenHeader title="Demo controls" />
       <ScrollView contentContainerStyle={{ padding: space.lg, gap: space.lg }}>
+        <Card style={{ gap: space.md }}>
+          <Row gap={space.sm}>
+            <UserRoundPlus size={18} color={colors.accent} />
+            <Text variant="heading">Prepare for next participant</Text>
+          </Row>
+          <Text variant="label">For usability tests: resets the demo data, signs this device out and restarts the intro, tour and checklist. Takes up to a minute.</Text>
+          <Button label={busy === 'next' ? 'Preparing… (up to a minute)' : 'Prepare for next participant'} onPress={nextParticipant} loading={busy === 'next'} disabled={!!busy} />
+        </Card>
         <Notice tone="warning" title="For demonstrations only">These controls simulate the passage of time and payment providers so the whole campaign lifecycle can be shown in minutes.</Notice>
         {state.isPending ? (
           <Skeleton height={80} radius={20} />
