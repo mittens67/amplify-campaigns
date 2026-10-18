@@ -8,8 +8,7 @@ import { Check, Keyboard, Mic, Sparkles, Square } from 'lucide-react-native';
 import { emptyContent } from '@amplify/domain';
 import { applyAiDraft, type AiDraftResult } from '@/features/create/aiDraft';
 import { useDrafts } from '@/features/create/draftStore';
-import { api, errorMessage } from '@/lib/api';
-import { appendFile } from '@/lib/media';
+import { api, apiUpload, errorMessage } from '@/lib/api';
 import { haptic } from '@/lib/haptics';
 import { Button, colors, fonts, Notice, radius, Row, ScreenHeader, space, Text, toast } from '@/ui';
 
@@ -79,9 +78,13 @@ export default function VoiceInterview() {
     if (!uri) return;
     setTranscribing(true);
     try {
-      const form = new FormData();
-      await appendFile(form, 'audio', uri, Platform.OS === 'web' ? 'answer.webm' : 'answer.m4a', Platform.OS === 'web' ? 'audio/webm' : 'audio/m4a');
-      const res = await api<{ text: string }>('/ai/transcribe', { method: 'POST', form, timeoutMs: 40_000 });
+      const res = await apiUpload<{ text: string }>('/ai/transcribe', {
+        field: 'audio',
+        uri,
+        name: Platform.OS === 'web' ? 'answer.webm' : 'answer.m4a',
+        type: Platform.OS === 'web' ? 'audio/webm' : 'audio/mp4',
+        timeoutMs: 40_000,
+      });
       if (!res.text) toast.info('We didn’t catch that. Try again or type it.');
       setAnswers((a) => ({ ...a, [q.key]: [a[q.key], res.text].filter(Boolean).join(' ') }));
     } catch (e) {

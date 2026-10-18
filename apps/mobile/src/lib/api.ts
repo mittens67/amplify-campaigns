@@ -1,4 +1,6 @@
+import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import { File, UploadType } from 'expo-file-system';
 import type { ApiErrorBody } from '@amplify/domain';
 import { useSession } from './session';
 
@@ -45,8 +47,24 @@ interface Options {
   timeoutMs?: number;
 }
 
-export async function api<T>(path: string, opts: Options = {}): Promise<T> {
+function authHeaders(): Record<string, string> {
   const { token, guestId } = useSession.getState();
+  return { ...(token ? { Authorization: `Bearer ${token}` } : {}), 'X-Guest-Id': guestId };
+}
+
+function readResponse<T>(status: number, header: (name: string) => string | null | undefined, data: any): T {
+  const now = header('x-server-now');
+  if (now) serverOffsetMs = new Date(now).getTime() - Date.now();
+  if (status === 204) return undefined as T;
+  if (status < 200 || status >= 300) {
+    const err = (data as ApiErrorBody | null)?.error;
+    if (status === 401 && useSession.getState().token) useSession.getState().signOut();
+    throw new ApiError(status, err?.code ?? 'HTTP_' + status, err?.message ?? 'Something went wrong. Please try again.', err?.fields);
+  }
+  return data as T;
+}
+
+export async function api<T>(path: string, opts: Options = {}): Promise<T> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 25_000);
   let res: Response;
@@ -57,8 +75,7 @@ export async function api<T>(path: string, opts: Options = {}): Promise<T> {
       headers: {
         Accept: 'application/json',
         ...(opts.form ? {} : { 'Content-Type': 'application/json' }),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        'X-Guest-Id': guestId,
+        ...authHeaders(),
         ...opts.headers,
       },
       body: opts.form ?? (opts.body === undefined ? undefined : JSON.stringify(opts.body)),
@@ -69,21 +86,48 @@ export async function api<T>(path: string, opts: Options = {}): Promise<T> {
   } finally {
     clearTimeout(timer);
   }
-  const serverNow = res.headers.get('x-server-now');
-  if (serverNow) serverOffsetMs = new Date(serverNow).getTime() - Date.now();
-  if (res.status === 204) return undefined as T;
   let data: any = null;
   try {
     data = await res.json();
   } catch {
     // non-JSON response (e.g. proxy error page)
   }
-  if (!res.ok) {
-    const err = (data as ApiErrorBody | null)?.error;
-    if (res.status === 401 && token) useSession.getState().signOut();
-    throw new ApiError(res.status, err?.code ?? 'HTTP_' + res.status, err?.message ?? 'Something went wrong. Please try again.', err?.fields);
+  return readResponse<T>(res.status, (n) => res.headers.get(n), data);
+}
+
+/**
+ * Upload a local file as multipart/form-data. On Android/iOS this goes through the native
+ * uploader: React Native's FormData file parts fail before reaching the network on some builds.
+ */
+export async function apiUpload<T>(path: string, file: { field: string; uri: string; name: string; type: string; timeoutMs?: number }): Promise<T> {
+  if (Platform.OS === 'web') {
+    const form = new FormData();
+    form.append(file.field, await (await fetch(file.uri)).blob(), file.name);
+    return api<T>(path, { method: 'POST', form, timeoutMs: file.timeoutMs });
   }
-  return data as T;
+  let result: { status: number; body: string; headers: Record<string, string> };
+  try {
+    // The native uploader needs a file:// URI; some recorders return a bare path.
+    const uri = /^[a-z]+:\/\//i.test(file.uri) ? file.uri : `file://${file.uri}`;
+    result = await new File(uri).upload(API_URL + path, {
+      httpMethod: 'POST',
+      uploadType: UploadType.MULTIPART,
+      fieldName: file.field,
+      mimeType: file.type,
+      headers: { Accept: 'application/json', ...authHeaders() },
+    });
+  } catch (e) {
+    console.warn('[upload] failed before a response:', (e as Error)?.message);
+    throw new ApiError(0, 'NETWORK', API_UNREACHABLE_HINT ?? 'Couldn’t upload the file. Check your connection and try again.');
+  }
+  let data: any = null;
+  try {
+    data = JSON.parse(result.body);
+  } catch {
+    // non-JSON response
+  }
+  const headers = Object.fromEntries(Object.entries(result.headers ?? {}).map(([k, v]) => [k.toLowerCase(), v]));
+  return readResponse<T>(result.status, (n) => headers[n], data);
 }
 
 export const isApiError = (e: unknown): e is ApiError => e instanceof ApiError;

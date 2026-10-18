@@ -2,29 +2,12 @@ import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { LIMITS, type Asset } from '@amplify/domain';
-import { api, ApiError } from './api';
+import { apiUpload, ApiError } from './api';
 
 export class MediaError extends Error {}
 
-/**
- * Append a local file to a multipart form. Native accepts { uri, name, type };
- * on web the uri is a blob:/data: URL, so it has to be read into a Blob first.
- */
-export async function appendFile(form: FormData, field: string, uri: string, name: string, type: string) {
-  if (Platform.OS === 'web') {
-    const blob = await (await fetch(uri)).blob();
-    form.append(field, blob, name);
-  } else {
-    // Android's networking layer can only read local files given as file:// URIs.
-    const fileUri = /^[a-z]+:\/\//i.test(uri) ? uri : `file://${uri}`;
-    form.append(field, { uri: fileUri, name, type } as any);
-  }
-}
-
-async function uploadFile(uri: string, name: string, type: string) {
-  const form = new FormData();
-  await appendFile(form, 'file', uri, name, type);
-  return api<{ url: string; kind: 'image' | 'video' }>('/uploads', { method: 'POST', form, timeoutMs: 60_000 });
+function uploadFile(uri: string, name: string, type: string) {
+  return apiUpload<{ url: string; kind: 'image' | 'video' }>('/uploads', { field: 'file', uri, name, type, timeoutMs: 60_000 });
 }
 
 /**
