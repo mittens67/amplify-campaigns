@@ -45,6 +45,7 @@ import { haptic } from '@/lib/haptics';
 import {
   Accordion,
   Button,
+  Chip,
   isNarrow,
   categoryTint,
   colors,
@@ -151,7 +152,8 @@ export function CampaignView({ c, preview = false, onBack }: { c: CampaignDetail
   }, [preview]);
   const content = c.content;
   const backable = c.status === 'available_for_funding' && !preview;
-  const sampleQuote = quote(2500, reachModel(c.reachModelVersion).peoplePerAdDollar);
+  const [sampleCents, setSampleCents] = useState(1000);
+  const sampleQuote = quote(sampleCents, reachModel(c.reachModelVersion).peoplePerAdDollar);
 
   const cite = (n: number) => {
     setHighlight(n);
@@ -242,7 +244,12 @@ export function CampaignView({ c, preview = false, onBack }: { c: CampaignDetail
         <Section style={{ marginTop: space.xl }}>
           <Accordion title="Where your money goes" subtitle="Fees, ad budget, refunds" icon={<HandCoins size={18} color={colors.accent} />} initiallyOpen={backable}>
             <Notice tone="accent" title="Amplification, not a donation">{AMPLIFICATION_LINE}</Notice>
-            <Text variant="label" color={colors.text}>Example: a $25 contribution</Text>
+            <Text variant="label" color={colors.text}>See how a contribution splits</Text>
+            <Row style={{ gap: space.sm, flexWrap: 'wrap' }}>
+              {[500, 1000, 2500, 5000].map((cents) => (
+                <Chip key={cents} size="sm" label={formatMoney(cents)} selected={sampleCents === cents} onPress={() => setSampleCents(cents)} />
+              ))}
+            </Row>
             <MoneyFlow quote={sampleQuote} />
             <Text variant="label" color={colors.text}>
               Funds are held for distribution and never paid to the creator. Reaching the goal doesn’t launch ads by itself — our team launches them once ad setup is complete.
