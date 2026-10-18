@@ -1,56 +1,69 @@
-# Welcome to your Expo app 👋
+# Amplify mobile app
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Expo SDK 58, React Native 0.88, TypeScript and expo-router. For the product overview and the design decisions, see the [root README](../../README.md).
 
-## Get started
+## Where the app starts
 
-1. Install dependencies
+`package.json` sets `"main": "expo-router/entry"`. expo-router turns every file in `src/app/` into a screen:
 
-   ```bash
-   npm install
-   ```
+| File | What it is |
+| --- | --- |
+| `src/app/_layout.tsx` | **Root layout.** Loads fonts and persisted state, starts waking the API, and defines the root stack (tabs plus modal screens). It also mounts the toast, glossary and "waking up" overlays. |
+| `src/app/(tabs)/_layout.tsx` | The five tabs: Home, Explore, Create, Activity, Profile. |
+| `src/app/(tabs)/index.tsx` | Home. The first screen after onboarding. |
+| `src/app/onboarding.tsx` | The 3-page intro, shown on first launch. |
+| `src/app/campaign/[id]/…` | Campaign detail, updates and final report. |
+| `src/app/back/[id].tsx` | Back flow: amount → review → simulated checkout → result. |
+| `src/app/create/…` | The create wizard (`[id].tsx`), voice drafting (`voice.tsx`) and the submit confirmation. |
+| `src/app/me/…` | Profile pages: your campaigns, backed, saved, payments, receipts, notification settings. |
+| `src/app/review/…` | Reviewer console, review inspector and demo controls (reviewer role only). |
+| `src/app/info/[page].tsx` | Static pages: how it works, FAQs, terms, privacy… |
 
-2. Start the app
+## Folders
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+src/app        Routes (above)
+src/features   Larger components: CampaignView (shared by detail + wizard preview), create wizard steps,
+               AI-draft merge, reach rings, tab tour + checklist
+src/ui         Design system: theme tokens, Text, Button, Card, Chip, TextField, sheets, toasts,
+               and the signature pieces MoneyFlow, JourneyRail, Estimate / Measured
+src/lib        api.ts (fetch client, uploads, server wake-up), queries.ts (React Query hooks + keys),
+               session.ts / tour.ts (Zustand stores persisted to AsyncStorage), media.ts, format.ts
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+## State
 
-### Other setup steps
+- **Server data** lives in React Query, with optimistic save and follow. It's invalidated after a contribution succeeds.
+- **The session** (token, guest id), **drafts** and **tour progress** live in Zustand stores, persisted with AsyncStorage.
+  - Drafts are local-first: they sync to `PUT /campaigns/:id/draft` after 1.2 s, with a version check.
+- **Business rules** come from `@amplify/domain`, which the API also uses: quotes, validation and the lifecycle.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Running it
 
-## Learn more
+Expo Go on the Play Store is still on SDK 57, so on a phone use the **development build**:
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+npx eas-cli@latest build -p android --profile development   # once; install the APK it gives you
+npm run mobile:tunnel                                       # from the repo root
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Point the app at an API with `EXPO_PUBLIC_API_URL` in `apps/mobile/.env`. The options are listed in `.env.example`:
+- same Wi-Fi → your PC's LAN IP on port 4000
+- a cloudflared tunnel
+- the deployed Render URL
 
-## Join the community
+The **web** version (`npm run mobile`, then press `w`) works for most flows. Generating the ad image and recording voice are phone-only.
 
-Join our community of developers creating universal apps.
+## Builds (`eas.json`)
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+| Profile | Output | API |
+| --- | --- | --- |
+| `development` | Dev-client APK | `.env` |
+| `preview` | Installable APK (what's submitted) | Render |
+| `production` | Play Store app bundle | Render |
+
+## Checks
+
+```bash
+npx tsc --noEmit
+```
