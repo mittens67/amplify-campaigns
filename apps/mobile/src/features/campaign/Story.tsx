@@ -1,8 +1,9 @@
 import { Fragment } from 'react';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Img as Image } from '@/ui/Img';
 import { ArrowUpRight, CircleCheck, Quote as QuoteIcon } from 'lucide-react-native';
 import type { Block, CampaignContent } from '@amplify/domain';
+import { openLink } from '@/lib/links';
 import { colors, fonts, radius, space, Text } from '@/ui';
 
 /** Markdown-lite: **bold** and [label](https://link) — enough for an editorial story without a heavy editor. */
@@ -21,7 +22,7 @@ export function RichText({ text, variant = 'story' }: { text: string; variant?: 
         const link = p.match(/^\[([^\]]+)\]\(([^)\s]+)\)$/);
         if (link) {
           return (
-            <Text key={i} variant={variant} color={colors.accent} style={{ textDecorationLine: 'underline' }} onPress={() => void Linking.openURL(link[2])} accessibilityRole="link">
+            <Text key={i} variant={variant} color={colors.accent} style={{ textDecorationLine: 'underline' }} onPress={() => void openLink(link[2])} accessibilityRole="link">
               {link[1]}
             </Text>
           );
@@ -130,7 +131,7 @@ export function Sources({ sources, highlight }: { sources: CampaignContent['stor
       {sources.map((s, i) => (
         <Pressable
           key={s.id}
-          onPress={() => s.url && void Linking.openURL(s.url)}
+          onPress={() => s.url && void openLink(s.url)}
           accessibilityRole="link"
           style={({ pressed }) => [styles.source, highlight === i + 1 && styles.sourceHighlight, pressed && { backgroundColor: colors.surfaceAlt }]}
         >

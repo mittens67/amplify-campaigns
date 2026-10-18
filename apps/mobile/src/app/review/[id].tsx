@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Img as Image } from '@/ui/Img';
 import { useLocalSearchParams } from 'expo-router';
 import { Check, ExternalLink, Eye, Rocket, Square, SquareCheck } from 'lucide-react-native';
@@ -16,6 +16,7 @@ import {
 } from '@amplify/domain';
 import { CampaignView } from '@/features/campaign/CampaignView';
 import { errorMessage } from '@/lib/api';
+import { openLink } from '@/lib/links';
 import { haptic } from '@/lib/haptics';
 import { longDate } from '@/lib/format';
 import { useReviewAction, useReviewCampaign } from '@/lib/queries';
@@ -138,7 +139,7 @@ export default function ReviewInspector() {
         <Accordion title="Story & sources" subtitle={`${content.story.blocks.length} sections · ${content.story.sources.length} sources`} initiallyOpen={c.status === 'submitted'}>
           <Text variant="story" numberOfLines={6}>{content.story.intro}</Text>
           {content.story.sources.map((s, i) => (
-            <Pressable key={s.id} onPress={() => s.url && void Linking.openURL(s.url)} style={styles.source} accessibilityRole="link">
+            <Pressable key={s.id} onPress={() => s.url && void openLink(s.url)} style={styles.source} accessibilityRole="link">
               <Text variant="label" weight="bold" color={colors.accentText}>{i + 1}</Text>
               <View style={{ flex: 1 }}>
                 <Text variant="label" color={colors.ink}>{s.title}</Text>
