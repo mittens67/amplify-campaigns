@@ -17,7 +17,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://amplify-api.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://amplify-api-4o7s.onrender.com"
       }
     },
     "production": {
@@ -25,7 +25,7 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://amplify-api.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://amplify-api-4o7s.onrender.com"
       }
     }
   }
