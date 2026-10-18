@@ -64,6 +64,7 @@ export async function api<T>(path: string, opts: Options = {}): Promise<T> {
       body: opts.form ?? (opts.body === undefined ? undefined : JSON.stringify(opts.body)),
     });
   } catch {
+    if (ctrl.signal.aborted) throw new ApiError(0, 'TIMEOUT', 'The server is taking too long to respond. Please try again.');
     throw new ApiError(0, 'NETWORK', API_UNREACHABLE_HINT ?? 'Can’t reach the server. Check your connection and try again.');
   } finally {
     clearTimeout(timer);

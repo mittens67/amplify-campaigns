@@ -268,7 +268,7 @@ export async function transcribe(file: { buffer: Buffer; mimetype: string; origi
   const p = provider();
   if (!p) throw new ApiError(503, 'AI_UNAVAILABLE', 'Voice transcription is not configured. Type your answer instead.');
   try {
-    return await timed(40_000, async (signal) => {
+    return await timed(30_000, async (signal) => {
       if (p === 'gemini') {
         // Android/iOS recordings are AAC in an MP4 container (.m4a).
         const mime = !file.mimetype || /m4a|octet-stream/.test(file.mimetype) ? 'audio/mp4' : file.mimetype;

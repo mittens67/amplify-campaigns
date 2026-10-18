@@ -15,7 +15,9 @@ export async function appendFile(form: FormData, field: string, uri: string, nam
     const blob = await (await fetch(uri)).blob();
     form.append(field, blob, name);
   } else {
-    form.append(field, { uri, name, type } as any);
+    // Android's networking layer can only read local files given as file:// URIs.
+    const fileUri = /^[a-z]+:\/\//i.test(uri) ? uri : `file://${uri}`;
+    form.append(field, { uri: fileUri, name, type } as any);
   }
 }
 
