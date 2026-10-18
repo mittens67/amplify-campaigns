@@ -15,6 +15,9 @@ import {
   LogOut,
   Compass,
   ListChecks,
+  Megaphone,
+  PenLine,
+  TrendingUp,
   PlayCircle,
   Mail,
   Receipt,
@@ -24,12 +27,18 @@ import {
   SlidersHorizontal,
   Users,
 } from 'lucide-react-native';
-import type { UserDTO } from '@amplify/domain';
+import type { CampaignStatus, UserDTO } from '@amplify/domain';
 import { api, errorMessage } from '@/lib/api';
 import { signOut, useMyCampaigns, useMyContributions, useSaved } from '@/lib/queries';
 import { useSession } from '@/lib/session';
 import { useTour } from '@/lib/tour';
 import { Button, Card, colors, Divider, ListRow, Pill, Row, space, TabTitle, Text, toast } from '@/ui';
+
+const LIVE_STATUSES: Partial<Record<CampaignStatus, { label: string; icon: typeof Megaphone }>> = {
+  promoting: { label: 'Ads live · see reach and spend', icon: Megaphone },
+  available_for_funding: { label: 'Funding · see progress', icon: TrendingUp },
+  changes_requested: { label: 'Changes requested · respond to review', icon: PenLine },
+};
 
 function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -61,6 +70,8 @@ export default function ProfileScreen() {
   };
 
   const go = (path: string) => () => router.push(path as any);
+  // Campaigns worth checking on right now, so creators don't have to dig for them.
+  const live = (mine.data ?? []).filter((c) => LIVE_STATUSES[c.status]);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingBottom: space.xxxl }}>
@@ -105,6 +116,26 @@ export default function ProfileScreen() {
             </Row>
           </Card>
         )}
+
+        {user && live.length ? (
+          <Group title="Live now">
+            {live.map((c, i) => {
+              const meta = LIVE_STATUSES[c.status]!;
+              const Icon = meta.icon;
+              return (
+                <View key={c.id}>
+                  {i ? <Divider inset={56} /> : null}
+                  <ListRow
+                    icon={<Icon size={20} color={colors.accent} />}
+                    title={c.title || 'Untitled campaign'}
+                    subtitle={meta.label}
+                    onPress={() => router.push({ pathname: '/me/campaign/[id]', params: { id: c.id } })}
+                  />
+                </View>
+              );
+            })}
+          </Group>
+        ) : null}
 
         <Group title="Your activity">
           <ListRow icon={<LayoutDashboard size={20} color={colors.ink} />} title="Your campaigns" subtitle="Drafts, review status, funding and reports" onPress={go('/me/campaigns')} />
