@@ -1,10 +1,11 @@
 import { useEffect, type ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeOut, FadeOutUp, SlideInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CheckCircle2, Info, X, XCircle } from 'lucide-react-native';
 import { create } from 'zustand';
 import { GLOSSARY, type GlossaryKey } from '@amplify/domain';
+import { useServer } from '@/lib/api';
 import { markTask } from '@/lib/tour';
 import { IconButton } from './Button';
 import { Text } from './Text';
@@ -73,6 +74,23 @@ export const toast = {
   error: (m: string) => useToastStore.getState().show('error', m),
   info: (m: string, action?: { label: string; onPress: () => void }) => useToastStore.getState().show('info', m, action),
 };
+
+/** Shown while the free-tier server is starting up, so a slow first load doesn't look broken. */
+export function WakeBanner() {
+  const state = useServer((s) => s.state);
+  const insets = useSafeAreaInsets();
+  if (state !== 'waking') return null;
+  return (
+    <Animated.View entering={FadeInDown.duration(200)} exiting={FadeOutUp.duration(150)} pointerEvents="none" style={[styles.toastWrap, { top: insets.top + space.sm }]}>
+      <View style={styles.toast} accessibilityLiveRegion="polite">
+        <ActivityIndicator size="small" color="#A5B4FC" />
+        <Text variant="label" color={colors.white} weight="medium" style={{ flex: 1 }}>
+          Waking up the server. The first load can take up to a minute.
+        </Text>
+      </View>
+    </Animated.View>
+  );
+}
 
 export function ToastHost() {
   const { toast: t, hide } = useToastStore();

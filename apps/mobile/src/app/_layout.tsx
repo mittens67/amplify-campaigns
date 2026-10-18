@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { AppState, View } from 'react-native';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
@@ -15,11 +15,14 @@ import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
 import { SourceSerif4_400Regular } from '@expo-google-fonts/source-serif-4/400Regular';
 import { SourceSerif4_600SemiBold } from '@expo-google-fonts/source-serif-4/600SemiBold';
 import { SourceSerif4_700Bold } from '@expo-google-fonts/source-serif-4/700Bold';
+import { wakeServer } from '@/lib/api';
 import { queryClient } from '@/lib/queries';
 import { useSession } from '@/lib/session';
-import { colors, GlossaryHost, ToastHost } from '@/ui';
+import { colors, GlossaryHost, ToastHost, WakeBanner } from '@/ui';
 
 void SplashScreen.preventAutoHideAsync();
+// Start waking the API before fonts and storage load, so it's often up by the first screen.
+void wakeServer();
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -37,6 +40,12 @@ export default function RootLayout() {
   useEffect(() => {
     if (ready) void SplashScreen.hideAsync();
   }, [ready]);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') void wakeServer();
+    });
+    return () => sub.remove();
+  }, []);
 
   if (!ready) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
 
@@ -58,6 +67,7 @@ export default function RootLayout() {
             <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
           </Stack>
           <GlossaryHost />
+          <WakeBanner />
           <ToastHost />
         </QueryClientProvider>
       </SafeAreaProvider>
